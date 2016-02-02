@@ -136,6 +136,9 @@
     }
     pathParams = path.parse(filePath);
     execHistory[filePath] = Date.now();
+    if (!silent) {
+      console.log("File changed: " + filePath);
+    }
     command = commandToExecute.replace(regEx.placeholder, function(entire, placeholder) {
       if (placeholder === 'path') {
         return filePath;

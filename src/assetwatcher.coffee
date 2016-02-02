@@ -104,6 +104,8 @@ executeCommandFor = (filePath)->
 	pathParams = path.parse filePath
 	execHistory[filePath] = Date.now()
 
+	unless silent then console.log "File changed: #{filePath}"
+
 	command = commandToExecute.replace regEx.placeholder, (entire, placeholder)->
 		if placeholder is 'path'
 			return filePath
