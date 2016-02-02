@@ -2,17 +2,17 @@
 options =
 	'd': 
 		alias: 'dir'
-		describe: 'Specify all dirs to watch for in quotes, separated with commas. Syntax: -d "dirA", "dirB"'
+		describe: 'Specify all dirs to watch for in quotes, separated with commas. Syntax: -d "dirA" "dirB"'
 		type: 'array'
 		demand: true
 	'i': 
 		alias: 'ignore'
-		describe: 'Specify all globs to ignore in quotes, separated with commas. Syntax: -s "globA", "globB"'
+		describe: 'Specify all globs to ignore in quotes, separated with commas. Syntax: -s "globA" "globB"'
 		type: 'array'
 	'e': 
 		alias: 'extension'
-		describe: 'Only watch files that have a specific extension'
-		type: 'string'
+		describe: 'Only watch files that have a specific extension. Syntax: -e "ext1" "ext2"'
+		type: 'array'
 	'x': 
 		alias: 'execute'
 		describe: 'Command to execute upon file addition/change'
@@ -45,7 +45,7 @@ args = yargs.argv
 regEx =
 	ext: /.+\.(sass|scss|js|coffee)$/i
 	import: /@import\s*(.+)/ig
-	placeholder: /#\{(.+)\}/ig
+	placeholder: /\#\{(\S+)\}/ig
 importHistory = {}
 execHistory = {}
 
@@ -73,16 +73,15 @@ captureImports = (fileContent, filePath)->
 			match = match.replace /'/g, '' # Removes quotes if present
 			hasExt = regEx.ext.test(match)
 			match += extName if not hasExt
-			resolvedMatch = dirPath+'/'+path.normalize(match)
+			resolvedMatch = path.normalize(dirPath+'/'+match)
 
 			if !importHistory[resolvedMatch]?
 				importHistory[resolvedMatch] = [filePath]
 			else
 				importHistory[resolvedMatch].push filePath
 
-			fs.readFile resolvedMatch, 'utf8', (err, data)->
-				if err then console.log(err); return
-				captureImports(data, resolvedMatch)
+			matchFileContent = fs.readFileSync resolvedMatch, 'utf8'
+			captureImports(matchFileContent, resolvedMatch)
 
 			return entire
 
@@ -133,8 +132,9 @@ dirs.forEach (dir)->
 	fw = fireworm(dir)
 
 	if onlyExt
-		fw.add("*.#{onlyExt}")
-		fw.add("**/*.#{onlyExt}")
+		onlyExt.forEach (ext)->
+			fw.add("*.#{ext}")
+			fw.add("**/*.#{ext}")
 	else
 		fw.add("*")
 		fw.add("**/*")

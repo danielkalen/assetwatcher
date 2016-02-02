@@ -6,19 +6,19 @@
   options = {
     'd': {
       alias: 'dir',
-      describe: 'Specify all dirs to watch for in quotes, separated with commas. Syntax: -d "dirA", "dirB"',
+      describe: 'Specify all dirs to watch for in quotes, separated with commas. Syntax: -d "dirA" "dirB"',
       type: 'array',
       demand: true
     },
     'i': {
       alias: 'ignore',
-      describe: 'Specify all globs to ignore in quotes, separated with commas. Syntax: -s "globA", "globB"',
+      describe: 'Specify all globs to ignore in quotes, separated with commas. Syntax: -s "globA" "globB"',
       type: 'array'
     },
     'e': {
       alias: 'extension',
-      describe: 'Only watch files that have a specific extension',
-      type: 'string'
+      describe: 'Only watch files that have a specific extension. Syntax: -e "ext1" "ext2"',
+      type: 'array'
     },
     'x': {
       alias: 'execute',
@@ -55,7 +55,7 @@
   regEx = {
     ext: /.+\.(sass|scss|js|coffee)$/i,
     "import": /@import\s*(.+)/ig,
-    placeholder: /#\{(.+)\}/ig
+    placeholder: /\#\{(\S+)\}/ig
   };
 
   importHistory = {};
@@ -89,25 +89,20 @@
       extName = path.extname(filePath);
       dirPath = path.dirname(filePath);
       return fileContent.replace(regEx["import"], function(entire, match) {
-        var hasExt, resolvedMatch;
+        var hasExt, matchFileContent, resolvedMatch;
         match = match.replace(/'/g, '');
         hasExt = regEx.ext.test(match);
         if (!hasExt) {
           match += extName;
         }
-        resolvedMatch = dirPath + '/' + path.normalize(match);
+        resolvedMatch = path.normalize(dirPath + '/' + match);
         if (importHistory[resolvedMatch] == null) {
           importHistory[resolvedMatch] = [filePath];
         } else {
           importHistory[resolvedMatch].push(filePath);
         }
-        fs.readFile(resolvedMatch, 'utf8', function(err, data) {
-          if (err) {
-            console.log(err);
-            return;
-          }
-          return captureImports(data, resolvedMatch);
-        });
+        matchFileContent = fs.readFileSync(resolvedMatch, 'utf8');
+        captureImports(matchFileContent, resolvedMatch);
         return entire;
       });
     }
@@ -174,8 +169,10 @@
     var fw;
     fw = fireworm(dir);
     if (onlyExt) {
-      fw.add("*." + onlyExt);
-      fw.add("**/*." + onlyExt);
+      onlyExt.forEach(function(ext) {
+        fw.add("*." + ext);
+        return fw.add("**/*." + ext);
+      });
     } else {
       fw.add("*");
       fw.add("**/*");
