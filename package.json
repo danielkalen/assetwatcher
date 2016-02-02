@@ -1,0 +1,48 @@
+{
+  "name": "assetwatcher",
+  "version": "1.0.0",
+  "description": "Smarter file change watcher supporting executing commands for files individually and ignoration of imported files.",
+  "keywords": [
+    "asset-watch",
+    "assetwatch",
+    "asset",
+    "js-watch",
+    "jswatch",
+    "jswatcher",
+    "sass-watch",
+    "sasswatch",
+    "sasswatcher",
+    "node-sass",
+    "libsass",
+    "sass",
+    "scss",
+    "foreach",
+    "each",
+    "watch"
+  ],
+  "main": "assetwatcher.js",
+  "bin": {
+    "assetwatcher": "./assetwatcher.js"
+  },
+  "author": "danielkalen",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielkalen/assetwatcher"
+  },
+  "license": "MIT",
+  "scripts": {
+    "watch": "nodemon -e coffee -w ./src -x 'npm run compile'",
+    "compile": "coffee -o ./ -c src/assetwatcher.coffee && npm run prependbin && npm run makeexec",
+    "prependbin": "echo '#!/usr/bin/env node' | cat - assetwatcher.js > tmp.js && mv tmp.js assetwatcher.js",
+    "makeexec": "chmod +x assetwatcher.js",
+    "copytopublic": "cp -r ./ ../../sandbox-public/assetwatcher"
+  },
+  "dependencies": {
+    "fireworm": "^0.7.0",
+    "yargs": "^3.29.0"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.10.0",
+    "nodemon": "^1.8.1"
+  }
+}
