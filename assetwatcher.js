@@ -101,6 +101,13 @@
         } else {
           importHistory[resolvedMatch].push(filePath);
         }
+        fs.readFile(resolvedMatch, 'utf8', function(err, data) {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          return captureImports(data, resolvedMatch);
+        });
         return entire;
       });
     }

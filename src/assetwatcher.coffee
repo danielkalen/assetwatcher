@@ -80,6 +80,10 @@ captureImports = (fileContent, filePath)->
 			else
 				importHistory[resolvedMatch].push filePath
 
+			fs.readFile resolvedMatch, 'utf8', (err, data)->
+				if err then console.log(err); return
+				captureImports(data, resolvedMatch)
+
 			return entire
 
 
