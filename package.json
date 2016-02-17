@@ -1,6 +1,6 @@
 {
   "name": "assetwatcher",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Smarter file change watcher supporting executing commands for files individually and ignoration of imported files.",
   "keywords": [
     "asset-watch",

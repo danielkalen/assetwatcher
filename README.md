@@ -20,16 +20,23 @@ assetwatcher -d <dirs> -i <globs to ignore> -e <specific extension> -x <command 
 
 ```bash
 -d, --dir        Specify all dirs to watch for in quotes, separated with
-                 commas. Syntax: -d "dirA", "dirB"          [array] [required]
+                 commas. Syntax: -d "dirA" "dirB"           [array] [required]
 -i, --ignore     Specify all globs to ignore in quotes, separated with commas.
-                 Syntax: -s "globA", "globB"                           [array]
--e, --extension  Only watch files that have a specific extension      [string]
+                 Syntax: -s "globA" "globB"                            [array]
+-e, --extension  Only watch files that have a specific extension. Syntax: -e
+                 "ext1" "ext2"                                         [array]
 -x, --execute    Command to execute upon file addition/change
                                                            [string] [required]
 -s, --silent     Suppress any output from the executing command
                                                     [boolean] [default: false]
+-n, --now        Execute the command for all files matched immediatly on
+                 startup                            [boolean] [default: false]
 -t, --imports    Optionally compile files that are imported by other files.
                                                     [boolean] [default: false]
+-w, --wait       Execution delay, i.e. how long should the assetwatcher wait
+                 before re-executing the command. If the watched file changes
+                 rapidly, the command will execute only once every X ms.
+                                                               [default: 1500]
 -h, --help       Show help                                           [boolean]
 ```
 **Executing Command Placeholders**

@@ -23,11 +23,21 @@ options =
 		describe: 'Suppress any output from the executing command'
 		type: 'boolean'
 		default: false
+	'n': 
+		alias: 'now'
+		describe: 'Execute the command for all files matched immediatly on startup'
+		type: 'boolean'
+		default: false
 	't': 
 		alias: 'imports'
 		describe: 'Optionally compile files that are imported by other files.'
 		type: 'boolean'
 		default: false
+	'w': 
+		alias: 'wait'
+		describe: 'Execution delay, i.e. how long should the assetwatcher wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms.'
+		type: 'number'
+		default: 1500
 
 
 fs = require('fs')
@@ -56,10 +66,31 @@ silent = args.s || args.silent
 imports = args.t || args.imports
 onlyExt = args.e || args.extension
 commandToExecute = args.x || args.execute
+runNow = args.n || args.now
+execDelay = args.w || args.wait
 
 if help
 	process.stdout.write(yargs.help());
 	process.exit(0)
+
+
+
+
+
+
+
+processFileAdded = (filePath)-> processFile(filePath, 'added')
+
+processFile = (filePath, eventType='changed')->
+	return if Date.now() - startTime < 3000 and !runNow
+	fs.stat filePath, (err, stats)->
+		if err then console.log(err); return
+		if stats.isFile()
+			fs.readFile filePath, 'utf8', (err, data)->
+				if err then console.log(err); return
+
+				captureImports(data, filePath)
+				startExecutionFor(filePath, eventType)
 
 
 
@@ -80,34 +111,29 @@ captureImports = (fileContent, filePath)->
 			else
 				importHistory[resolvedMatch].push filePath
 
-			matchFileContent = fs.readFileSync resolvedMatch, 'utf8'
-			captureImports(matchFileContent, resolvedMatch)
+			try
+				stats = fs.statSync resolvedMatch
+				if stats.isFile()
+					matchFileContent = fs.readFileSync resolvedMatch, 'utf8'
+					captureImports(matchFileContent, resolvedMatch)
 
 			return entire
 
-
-
-processFile = (filePath)->
-	fs.readFile filePath, 'utf8', (err, data)->
-		if err then console.log(err); return
-		
-		captureImports(data, filePath)
-		startExecutionFor(filePath)
 		
 
-startExecutionFor = (filePath)->
+startExecutionFor = (filePath, eventType)->
 	if importHistory[filePath]? # Indicates this file is an import
 		importingFiles = importHistory[filePath]
 		importingFiles.forEach (file)-> startExecutionFor(file)
-	else executeCommandFor(filePath)
+	else executeCommandFor(filePath, eventType)
 
 
-executeCommandFor = (filePath)->
-	return if execHistory[filePath]? and Date.now() - execHistory[filePath] < 1500
+executeCommandFor = (filePath, eventType)->
+	return if execHistory[filePath]? and Date.now() - execHistory[filePath] < execDelay
 	pathParams = path.parse filePath
 	execHistory[filePath] = Date.now()
 
-	unless silent then console.log "File changed: #{filePath}"
+	unless silent then console.log "File #{eventType}: #{filePath}"
 
 	command = commandToExecute.replace regEx.placeholder, (entire, placeholder)->
 		if placeholder is 'path'
@@ -123,27 +149,37 @@ executeCommandFor = (filePath)->
 			if err then console.log(err)
 			if stdout then console.log(stdout)
 			if stderr then console.log(stderr)
+			console.log "Finished executing command for \x1b[32m#{pathParams.base}\x1b[0m\n"
+
+
+
+
+
+
+
+
 
 
 
 
 # ==== Start Watching =================================================================================
+startTime = Date.now()
 dirs.forEach (dir)->
-	fw = fireworm(dir)
+	fw = fireworm dir
 
 	if onlyExt
 		onlyExt.forEach (ext)->
-			fw.add("*.#{ext}")
 			fw.add("**/*.#{ext}")
 	else
-		fw.add("*")
 		fw.add("**/*")
 
 	if ignore and ignore.length
 		ignore.forEach (globToIgnore)-> fw.ignore(globToIgnore)
 
-	fw.on('add', processFile)
+	fw.on('add', processFileAdded)
 	fw.on('change', processFile)
+
+	console.log "Started watching \x1b[36m#{dir}\x1b[0m"
 
 
 
