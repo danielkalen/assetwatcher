@@ -1,5 +1,5 @@
-// @import 'nested/one'
-// @import 'nested/two.js'
-// @import 'nested/nonexistent.js'
+// @import 'nested/src/one'
+// @import 'nested/src/two.js'
+// @import 'nested/src/nonexistent.js'
 
 ('main');

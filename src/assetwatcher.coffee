@@ -76,21 +76,37 @@ if help
 
 
 
+passedStartDelay = ()-> Date.now() - startTime > 3000
+passedExecDelay = (filePath)-> 
+	if execHistory[filePath]? 
+		passed = Date.now() - execHistory[filePath] > execDelay 
+	else
+		passed = true
+
+	return passed
+
+
+
+
+
 # Process = 	fireworm -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
 startProcessingFileAdded = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir, 'added')
 startProcessingFile = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir)
 
-processFile = (filePath, watchedDir, eventType='changed')->
-	return if Date.now() - startTime < 3000 and !runNow
+processFile = (filePath, watchedDir, eventType='changed')->	
 	fs.stat filePath, (err, stats)->
 		if err then console.log(err); return
+		
 		if stats.isFile()
 			fs.readFile filePath, 'utf8', (err, data)->
 				if err then console.log(err); return
+	
+				if not silent and passedStartDelay()
+					console.log "File #{eventType}: #{filePath}"
 
 				captureImports(data, filePath)
-				startExecutionFor(filePath, filePath, watchedDir, eventType)
+				startExecutionFor(filePath, watchedDir, eventType)
 
 
 
@@ -121,20 +137,21 @@ captureImports = (fileContent, filePath)->
 
 		
 
-startExecutionFor = (filePath, triggeringFile, watchedDir, eventType)->
+startExecutionFor = (filePath, watchedDir, eventType)->
+	return if not passedStartDelay() and not runNow
+
 	if importHistory[filePath]? # Indicates this file is an import
 		importingFiles = importHistory[filePath]
-		importingFiles.forEach (file)-> startExecutionFor(file, filePath, watchedDir, eventType)
-	else executeCommandFor(filePath, triggeringFile or filePath, watchedDir, eventType)
+		importingFiles.forEach (file)-> startExecutionFor(file, watchedDir, eventType)
+	else executeCommandFor(filePath, watchedDir, eventType)
 
 
-executeCommandFor = (filePath, triggeringFile, watchedDir, eventType)->
-	return if execHistory[filePath]? and Date.now() - execHistory[filePath] < execDelay
+executeCommandFor = (filePath, watchedDir, eventType)->
+	return if not passedExecDelay(filePath)
+	# return if Date.now() - execHistory[filePath] < execDelay
 	pathParams = path.parse filePath
 	pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1)
 	execHistory[filePath] = Date.now()
-
-	unless silent then console.log "File #{eventType}: #{triggeringFile}"
 
 	command = commandToExecute.replace regEx.placeholder, (entire, placeholder)->
 		if placeholder is 'path'
@@ -165,6 +182,7 @@ executeCommandFor = (filePath, triggeringFile, watchedDir, eventType)->
 
 # ==== Start Watching =================================================================================
 startTime = Date.now()
+
 dirs.forEach (dir)->
 	fw = fireworm dir
 
