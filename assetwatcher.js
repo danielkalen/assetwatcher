@@ -184,7 +184,7 @@
       return;
     }
     pathParams = path.parse(filePath);
-    pathParams.reldir = pathParams.dir.replace(watchedDir, '');
+    pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1);
     execHistory[filePath] = Date.now();
     if (!silent) {
       console.log("File " + eventType + ": " + triggeringFile);
@@ -231,12 +231,11 @@
         return fw.ignore(globToIgnore);
       });
     }
-    if (dir.charAt(0) === '.') {
-      dirName = dir.slice(2);
-    } else if (dir.charAt(0) === '/') {
-      dirName = dir.slice(1);
-    } else {
-      dirName = dir;
+    dirName = dir.charAt(dir.length - 1) === '/' ? dir.slice(0, dir.length - 1) : dir;
+    if (dirName.charAt(0) === '.') {
+      dirName = dirName.slice(2);
+    } else if (dirName.charAt(0) === '/') {
+      dirName = dirName.slice(1);
     }
     fw.on('add', startProcessingFileAdded(dirName));
     fw.on('change', startProcessingFile(dirName));

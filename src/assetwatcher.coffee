@@ -131,7 +131,7 @@ startExecutionFor = (filePath, triggeringFile, watchedDir, eventType)->
 executeCommandFor = (filePath, triggeringFile, watchedDir, eventType)->
 	return if execHistory[filePath]? and Date.now() - execHistory[filePath] < execDelay
 	pathParams = path.parse filePath
-	pathParams.reldir = pathParams.dir.replace watchedDir, ''
+	pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1)
 	execHistory[filePath] = Date.now()
 
 	unless silent then console.log "File #{eventType}: #{triggeringFile}"
@@ -177,12 +177,13 @@ dirs.forEach (dir)->
 	if ignore and ignore.length
 		ignore.forEach (globToIgnore)-> fw.ignore(globToIgnore)
 
-	if dir.charAt(0) is '.'
-		dirName = dir.slice(2)
-	else if dir.charAt(0) is '/'
-		dirName = dir.slice(1)
-	else
-		dirName = dir
+	dirName = if dir.charAt(dir.length-1) is '/' then dir.slice(0, dir.length-1) else dir
+	# dirName = dir
+	if dirName.charAt(0) is '.'
+		dirName = dirName.slice(2)
+	else if dirName.charAt(0) is '/'
+		dirName = dirName.slice(1)
+	
 
 	fw.on('add', startProcessingFileAdded(dirName))
 	fw.on('change', startProcessingFile(dirName))
