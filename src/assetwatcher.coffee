@@ -76,12 +76,12 @@ if help
 
 
 
+# Process = 	fireworm -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
+startProcessingFileAdded = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir, 'added')
+startProcessingFile = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir)
 
-
-processFileAdded = (filePath)-> processFile(filePath, 'added')
-
-processFile = (filePath, eventType='changed')->
+processFile = (filePath, watchedDir, eventType='changed')->
 	return if Date.now() - startTime < 3000 and !runNow
 	fs.stat filePath, (err, stats)->
 		if err then console.log(err); return
@@ -90,7 +90,7 @@ processFile = (filePath, eventType='changed')->
 				if err then console.log(err); return
 
 				captureImports(data, filePath)
-				startExecutionFor(filePath, eventType)
+				startExecutionFor(filePath, filePath, watchedDir, eventType)
 
 
 
@@ -121,19 +121,20 @@ captureImports = (fileContent, filePath)->
 
 		
 
-startExecutionFor = (filePath, eventType)->
+startExecutionFor = (filePath, triggeringFile, watchedDir, eventType)->
 	if importHistory[filePath]? # Indicates this file is an import
 		importingFiles = importHistory[filePath]
-		importingFiles.forEach (file)-> startExecutionFor(file)
-	else executeCommandFor(filePath, eventType)
+		importingFiles.forEach (file)-> startExecutionFor(file, filePath, watchedDir, eventType)
+	else executeCommandFor(filePath, triggeringFile or filePath, watchedDir, eventType)
 
 
-executeCommandFor = (filePath, eventType)->
+executeCommandFor = (filePath, triggeringFile, watchedDir, eventType)->
 	return if execHistory[filePath]? and Date.now() - execHistory[filePath] < execDelay
 	pathParams = path.parse filePath
+	pathParams.reldir = pathParams.dir.replace watchedDir, ''
 	execHistory[filePath] = Date.now()
 
-	unless silent then console.log "File #{eventType}: #{filePath}"
+	unless silent then console.log "File #{eventType}: #{triggeringFile}"
 
 	command = commandToExecute.replace regEx.placeholder, (entire, placeholder)->
 		if placeholder is 'path'
@@ -176,8 +177,15 @@ dirs.forEach (dir)->
 	if ignore and ignore.length
 		ignore.forEach (globToIgnore)-> fw.ignore(globToIgnore)
 
-	fw.on('add', processFileAdded)
-	fw.on('change', processFile)
+	if dir.charAt(0) is '.'
+		dirName = dir.slice(2)
+	else if dir.charAt(0) is '/'
+		dirName = dir.slice(1)
+	else
+		dirName = dir
+
+	fw.on('add', startProcessingFileAdded(dirName))
+	fw.on('change', startProcessingFile(dirName))
 
 	console.log "Started watching \x1b[36m#{dir}\x1b[0m"
 
