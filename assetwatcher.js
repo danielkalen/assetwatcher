@@ -166,7 +166,9 @@
         if (importHistory[resolvedMatch] == null) {
           importHistory[resolvedMatch] = [filePath];
         } else {
-          importHistory[resolvedMatch].push(filePath);
+          if (importHistory[resolvedMatch].indexOf(filePath) === -1) {
+            importHistory[resolvedMatch].push(filePath);
+          }
         }
         try {
           stats = fs.statSync(resolvedMatch);

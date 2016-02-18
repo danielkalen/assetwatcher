@@ -125,7 +125,7 @@ captureImports = (fileContent, filePath)->
 			if !importHistory[resolvedMatch]?
 				importHistory[resolvedMatch] = [filePath]
 			else
-				importHistory[resolvedMatch].push filePath
+				importHistory[resolvedMatch].push filePath unless importHistory[resolvedMatch].indexOf(filePath) isnt -1
 
 			try
 				stats = fs.statSync resolvedMatch

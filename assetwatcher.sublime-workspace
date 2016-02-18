@@ -4,6 +4,42 @@
 		"selected_items":
 		[
 			[
+				"passed",
+				"passedExecDelay"
+			],
+			[
+				"pass",
+				"passedExecDelay"
+			],
+			[
+				"log",
+				"logDelay"
+			],
+			[
+				"import",
+				"importHistory"
+			],
+			[
+				"start",
+				"startProcessingFileAdded"
+			],
+			[
+				"eve",
+				"eventType"
+			],
+			[
+				"watch",
+				"watchedDir"
+			],
+			[
+				"processFile",
+				"processFileAdded"
+			],
+			[
+				"file",
+				"filePath"
+			],
+			[
 				"pop",
 				"popupHeight"
 			],
@@ -336,10 +372,6 @@
 				"contact-and-general-forms"
 			],
 			[
-				"pass",
-				"password〔argument〕"
-			],
-			[
 				"left",
 				"leftDistance〔variable〕"
 			],
@@ -482,43 +514,19 @@
 			[
 				"reviewAut",
 				"$reviewAuthor〔variable〕"
-			],
-			[
-				"tabS",
-				"tabSlug〔variable〕"
-			],
-			[
-				"query",
-				"queryStringExists〔variable〕"
-			],
-			[
-				"extra",
-				"extra_buttons"
-			],
-			[
-				"extra_buttons_",
-				"extra_buttons_revealer"
-			],
-			[
-				"loaded",
-				"loadedAlready"
-			],
-			[
-				"fives",
-				"fivestar-new"
-			],
-			[
-				"ha",
-				"h:a	height:auto"
-			],
-			[
-				"charts",
-				"chartsWithThisProvider"
 			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "src/assetwatcher.coffee",
+			"settings":
+			{
+				"buffer_size": 5591,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -673,10 +681,24 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/danielkalen/sandbox/assetwatcher"
+		"/Users/danielkalen/sandbox/assetwatcher",
+		"/Users/danielkalen/sandbox/assetwatcher/test",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/nested"
 	],
 	"file_history":
 	[
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/nested/one.js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/nested/two.js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/main.js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/mainCopy2.js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/mainCopy.js",
+		"/Users/danielkalen/sandbox/assetwatcher/assetwatcher.js",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/copy.js",
+		"/Users/danielkalen/sandbox/assetwatcher/package.json",
+		"/Users/danielkalen/sandbox/assetwatcher/README.md",
+		"/Users/danielkalen/sandbox/assetwatcher/test/js/src/nested/three.js",
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/page.php",
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/sass/_parts-global/header.sass",
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/sass/global.sass",
@@ -794,21 +816,11 @@
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/sass/_parts_article/article-body.sass",
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/js/article.min.js",
 		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/getvoip-campaign.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/TEST/getvoip-campaign.pretty.js",
-		"/Users/danielkalen/Desktop/sandbox/notices/package.json",
-		"/Users/danielkalen/Desktop/sandbox/form-engine/package.json",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/TEST/review.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/node_modules/uglify/lib/uglify.js",
-		"/Users/danielkalen/Desktop/sandbox/simplybind/package.json",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/_parts-campaign/generate_campaign_template.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/admin_global.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/article.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/blog.js",
-		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/_assets/js/comparison_page.js"
+		"/Users/danielkalen/Projects/getvoip/gv_main/wp-content/themes/getvoip/TEST/getvoip-campaign.pretty.js"
 	],
 	"find":
 	{
-		"height": 23.0
+		"height": 38.0
 	},
 	"find_in_files":
 	{
@@ -932,6 +944,21 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"passedExecDelay",
+			"startExecutionFor",
+			"triggeringFile",
+			"dir.",
+			"startExecutionFor",
+			"executeCommandFor",
+			"watchedDir",
+			"imports",
+			"executeCommandFor",
+			"event",
+			"processFile",
+			"console",
+			"match",
+			"dirPath",
+			"1500",
 			"value",
 			"span",
 			"return",
@@ -1044,22 +1071,7 @@
 			"*",
 			"source",
 			"if (isset($_SERVER['HTTP_CF_IPCOUNTRY'])) {",
-			"saveQuoteSubmission($type, $formtype, $source, $referrer, $ip, $needs, $lines, $email, $phone, $firstname, $lastname, $input,",
-			"saveQuoteSubmission",
-			"saveQuoteSub",
-			" ?:",
-			"$providerName",
-			"date",
-			"form",
-			"saveQuoteSubmission",
-			"Full_Name",
-			"$type, $formtype, $source, $referrer, $ip, $needs, $lines, $email, $phone, $firstname, $lastname, $input",
-			"saveQuoteSub",
-			"providerName",
-			"render_provider_popup",
-			"providerName",
-			"providerI",
-			"provider"
+			"saveQuoteSubmission($type, $formtype, $source, $referrer, $ip, $needs, $lines, $email, $phone, $firstname, $lastname, $input,"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1101,8 +1113,99 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "src/assetwatcher.coffee",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5591,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4859,
+								4859
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content"
+							],
+							"color_scheme": "Packages/User/Color Highlighter/themes/Monokai (Custom) (SL).tmTheme",
+							"expand_region_settings": "{\"stack\": [{\"start\": 2121, \"end\": 2128}, {\"start\": 2114, \"end\": 2128}], \"hash\": \"fed7c9d8bdccd6476eda8aad6152c199\"}",
+							"syntax": "Packages/Better CoffeeScript/CoffeeScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2000.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -1185,7 +1288,7 @@
 		[
 			[
 				"",
-				"~/Projects/bugcleaners/bugcleaners.sublime-project"
+				"~/sandbox/simplybind/simplybind.sublime-project"
 			]
 		],
 		"width": 380.0
