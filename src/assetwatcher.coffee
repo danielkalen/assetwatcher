@@ -7,7 +7,11 @@ options =
 		demand: true
 	'i': 
 		alias: 'ignore'
-		describe: 'Specify all globs to ignore in quotes, separated with commas. Syntax: -s "globA" "globB"'
+		describe: 'Specify all globs to ignore in quotes, separated with commas. Changes to matching files will NOT trigger any executions even if imported by another file. Syntax: -s "globA" "globB"'
+		type: 'array'
+	'I': 
+		alias: 'ignoreweak'
+		describe: 'Specify all globs to weakly ignore in quotes, separated with commas. Changes to matching files WILL trigger an execution if imported by another file. Syntax: -s "globA" "globB"'
 		type: 'array'
 	'e': 
 		alias: 'extension'
@@ -18,6 +22,11 @@ options =
 		describe: 'Command to execute upon file addition/change'
 		type: 'string'
 		demand: true
+	'f': 
+		alias: 'finally'
+		# describe: 'Command to execute once a single/group of files have changed. Waits 3 seconds and then executes.'
+		describe: 'Command to execute X ms (default: 3000) after the addition/change of the last file. For example if some file change triggered a command to be run for 10 files, after 3 seconds this "finally" command will be run once.'
+		type: 'string'
 	's': 
 		alias: 'silent'
 		describe: 'Suppress any output from the executing command'
@@ -38,9 +47,15 @@ options =
 		describe: 'Execution delay, i.e. how long should the assetwatcher wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms.'
 		type: 'number'
 		default: 1500
+	'W': 
+		alias: 'finallywait'
+		describe: 'The amount of milliseconds to wait before executing the finally command (if passed).'
+		type: 'number'
+		default: 3000
 
 
 fs = require('fs')
+glob = require('glob')
 path = require('path')
 fireworm = require('fireworm')
 exec = require('child_process').exec
@@ -58,20 +73,64 @@ regEx =
 	placeholder: /\#\{(\S+)\}/ig
 importHistory = {}
 execHistory = {}
+filesToIgnoreExecFor = []
+finallyTimeout = null
+
 
 dirs = args.d || args.dir
 ignore = args.i || args.ignore
+ignoreWeak = args.I || args.ignoreweak
 help = args.h || args.help
 silent = args.s || args.silent
 imports = args.t || args.imports
 onlyExt = args.e || args.extension
-commandToExecute = args.x || args.execute
 runNow = args.n || args.now
+commandToExecute = args.x || args.execute
+finallyExecCommand = args.f || args.finally
 execDelay = args.w || args.wait
+finallyExecDelay = args.W || args.finallywait
+
+
 
 if help
 	process.stdout.write(yargs.help());
 	process.exit(0)
+
+
+
+if ignoreWeak
+	ignoreWeak.forEach (globToIgnore)->
+		glob globToIgnore, (err, files)->
+			throw err if err
+
+			# files = files.map (file)-> path.resolve(file)
+			filesToIgnoreExecFor = filesToIgnoreExecFor.concat(files)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -89,7 +148,7 @@ passedExecDelay = (filePath)->
 
 
 
-# Process = 	fireworm -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
+# Process ============> fireworm -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
 startProcessingFileAdded = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir, 'added')
 startProcessingFile = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir)
@@ -147,7 +206,7 @@ startExecutionFor = (filePath, watchedDir, eventType)->
 
 
 executeCommandFor = (filePath, watchedDir, eventType)->
-	return if not passedExecDelay(filePath)
+	return if not passedExecDelay(filePath) or filesToIgnoreExecFor.indexOf(filePath) isnt -1
 	# return if Date.now() - execHistory[filePath] < execDelay
 	pathParams = path.parse filePath
 	pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1)
@@ -162,16 +221,25 @@ executeCommandFor = (filePath, watchedDir, eventType)->
 		
 		else return entire
 
+
 	exec command, (err, stdout, stderr)->
 		unless silent
 			if err then console.log(err)
 			if stdout then console.log(stdout)
 			if stderr then console.log(stderr)
 			console.log "Finished executing command for \x1b[32m#{pathParams.base}\x1b[0m\n"
+			
+			clearTimeout(finallyTimeout) if finallyExecCommand
+			finallyTimeout = setTimeout(execFinallyCommand, finallyExecDelay) if finallyExecCommand
 
 
-
-
+execFinallyCommand = ()->
+	exec finallyExecCommand, (err, stdout, stderr)->
+		unless silent
+			if err then console.log(err)
+			if stdout then console.log(stdout)
+			if stderr then console.log(stderr)
+			console.log "Finished executing \x1b[35mfinal command\x1b[0m"
 
 
 
