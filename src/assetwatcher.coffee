@@ -70,7 +70,7 @@ args = yargs.argv
 regEx =
 	ext: /.+\.(sass|scss|js|coffee)$/i
 	import: /@import\s*(.+)/ig
-	placeholder: /\#\{(\S+)\}/ig
+	placeholder: /\#\{([^\/\}]+)\}/ig
 importHistory = {}
 execHistory = {}
 filesToIgnoreExecFor = []

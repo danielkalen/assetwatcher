@@ -56,6 +56,7 @@ assetwatcher -d <dirs> -i <globs to ignore> -e <specific extension> -x <command 
 "path"  -  full path and filename
 "root"  -  file root
 "dir"   -  path without the filename
+"reldir"-  directory name of file relative to the current working directory
 "base"  -  file name and extension
 "ext"   -  just file extension
 "name"  -  just file name
