@@ -3,7 +3,7 @@ fs = require 'fs'
 glob = require 'glob'
 chalk = require 'chalk'
 path = require 'path'
-fireworm = require 'fireworm'
+chokidar = require 'chokidar'
 exec = require('child_process').exec
 regEx = require './regex'
 yargs = require 'yargs'
@@ -28,7 +28,7 @@ options =
 	'help': args.h or args.help
 	'silent': args.s or args.silent
 	'imports': args.t or args.imports
-	'onlyExt': args.e or args.extension
+	'specificExts': args.e or args.extension
 	'runNow': args.n or args.now
 	'command': args.x or args.execute
 	'finalCommand': args.f or args.finally
@@ -93,7 +93,7 @@ passedExecDelay = (filePath)->
 
 
 
-# Process ============> fireworm -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
+# Process ============> chokidar -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
 startProcessingFileAdded = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir, 'added')
 startProcessingFile = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir)
@@ -196,30 +196,31 @@ execFinallyCommand = ()->
 # ==== Start Watching =================================================================================
 startTime = Date.now()
 
-options.dirs.forEach (dir)->
-	fw = fireworm dir
-
-	if options.onlyExt
-		options.onlyExt.forEach (ext)->
-			fw.add("**/*.#{ext}")
-	else
-		fw.add("**/*")
+options.dirs.forEach (dirPath)->
+	watcher = chokidar.watch(dirPath)
 
 	if options.ignoreList?.length
-		options.ignoreList.forEach (globToIgnore)-> fw.ignore(globToIgnore)
+		watcher.ignore(globToIgnore) for ignoreGlob in options.ignoreList
+	
 
-	dirName = if dir.charAt(dir.length-1) is '/' then dir.slice(0, dir.length-1) else dir
-	# dirName = dir
-	if dirName.charAt(0) is '.'
+	if not options.specificExts
+		watcher.add("**/*")
+	else
+		watcher.add("**/*.#{ext}") for ext in options.specificExts
+
+
+	dirName = if dirPath.slice(-1)[0] is '/' then dirPath.slice(0,-1) else dirPath
+
+	if dirName[0] is '.'
 		dirName = dirName.slice(2)
-	else if dirName.charAt(0) is '/'
+	else if dirName[0] is '/'
 		dirName = dirName.slice(1)
 	
 
-	fw.on('add', startProcessingFileAdded(dirName))
-	fw.on('change', startProcessingFile(dirName))
+	watcher.on('add', startProcessingFileAdded dirName)
+	watcher.on('change', startProcessingFile dirName)
 
-	console.log "Started watching \x1b[36m#{dir}\x1b[0m"
+	console.log chalk.bgGreen.black('Watching')+' '+chalk.dim(dirPath)
 
 
 
