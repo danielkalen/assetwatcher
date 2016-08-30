@@ -11,7 +11,8 @@ yargs
 	.usage("#{chalk.bgYellow.black('Usage')} simplywatch -d <directory globs> -s <globs to skip> -i")
 	.options(require './cliOptions')
 	.help('h')
-	.alias('h', 'help')
+	.version()
+	.wrap(yargs.terminalWidth())
 args = yargs.argv
 
 
