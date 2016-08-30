@@ -34,7 +34,7 @@
   "scripts": {
     "watch": "nodemon -e coffee -w ./src -x 'npm run build'",
     "build": "npm run compile && npm run prependbin && npm run makeexec",
-    "compile": "coffee -b -o ./dist -c src/simplywatch.coffee",
+    "compile": "foreach -g 'src/*.coffee' -x 'cat {{path}} | coffee -c -s -b > dist/{{name}}.js'",
     "prependbin": "echo '#!/usr/bin/env node' | cat - dist/simplywatch.js > dist/tmp.js && mv dist/tmp.js dist/simplywatch.js",
     "makeexec": "chmod +x dist/simplywatch.js && chmod +x src/simplywatch.coffee",
     "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
@@ -46,6 +46,7 @@
     "chalk": "^1.1.3",
     "chokidar": "^1.6.0",
     "fireworm": "^0.7.0",
+    "foreach-cli": "^1.5.0",
     "fs-extra": "^0.30.0",
     "glob": "^7.0.3",
     "yargs": "^3.29.0"
