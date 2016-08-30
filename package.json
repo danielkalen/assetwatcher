@@ -1,5 +1,5 @@
 {
-  "name": "assetwatcher",
+  "name": "simplywatch",
   "version": "1.3.6",
   "description": "Smarter file change watcher supporting executing commands for files individually and ignoration of imported files.",
   "keywords": [
@@ -20,23 +20,23 @@
     "each",
     "watch"
   ],
-  "main": "assetwatcher.js",
+  "main": "simplywatch.js",
   "bin": {
-    "assetwatcher": "./dist/assetwatcher.js"
+    "simplywatch": "./dist/simplywatch.js"
   },
   "author": "danielkalen",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danielkalen/assetwatcher"
+    "url": "https://github.com/danielkalen/simplywatch"
   },
   "license": "MIT",
   "mocha_opts": "-u tdd -b --compilers coffee:coffee-script/register --slow 500 --timeout 3000 -R spec",
   "scripts": {
     "watch": "nodemon -e coffee -w ./src -x 'npm run build'",
     "build": "npm run compile && npm run prependbin && npm run makeexec",
-    "compile": "coffee -b -o ./dist -c src/assetwatcher.coffee",
-    "prependbin": "echo '#!/usr/bin/env node' | cat - dist/assetwatcher.js > dist/tmp.js && mv dist/tmp.js dist/assetwatcher.js",
-    "makeexec": "chmod +x dist/assetwatcher.js && chmod +x src/assetwatcher.coffee",
+    "compile": "coffee -b -o ./dist -c src/simplywatch.coffee",
+    "prependbin": "echo '#!/usr/bin/env node' | cat - dist/simplywatch.js > dist/tmp.js && mv dist/tmp.js dist/simplywatch.js",
+    "makeexec": "chmod +x dist/simplywatch.js && chmod +x src/simplywatch.coffee",
     "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
     "coverage:badge:": "coffee .config/badge-gen.coffee",
     "test": "mocha $npm_package_mocha_opts"

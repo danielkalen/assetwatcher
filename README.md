@@ -1,11 +1,11 @@
-# AssetWatcher
+# SimplyWatch
 A command line tool inspired by [smartwatch](https://www.npmjs.com/package/smartwatch) that monitors files under a given directory and individually  executes commands (with optional dynamic placeholders) for changed/added files.
 
 
 Installation:
 ------
 ```bash
-npm install assetwatcher
+npm install simplywatch
 ```
 
 
@@ -13,7 +13,7 @@ Usage:
 ------
 **Command Line**
 ```
-assetwatcher -d <dirs> -i <globs to ignore> -e <specific extension> -x <command to execute> -[s|t]
+simplywatch -d <dirs> -i <globs to ignore> -e <specific extension> -x <command to execute> -[s|t]
 ```
 
 **Command Line Options:**
@@ -43,7 +43,7 @@ assetwatcher -d <dirs> -i <globs to ignore> -e <specific extension> -x <command 
                    startup                          [boolean] [default: false]
 -t, --imports      Optionally compile files that are imported by other files.
                                                     [boolean] [default: false]
--w, --wait         Execution delay, i.e. how long should the assetwatcher wait
+-w, --wait         Execution delay, i.e. how long should the simplywatch wait
                    before re-executing the command. If the watched file
                    changes rapidly, the command will execute only once every X
                    ms.                                         [default: 1500]
@@ -71,7 +71,7 @@ Example:
 ------
 #### Command Line:
 ```
-assetwatcher -d "assets/" -e "sass" -x "node-sass #{path} -o public/css/#{name}.css"
-assetwatcher -d "assets/" -e "js" -i "_*.js" "dontcompile/*" -x "simplyimport -i #{path} -o public/js/#{name}.compiled.js"
+simplywatch -d "assets/" -e "sass" -x "node-sass #{path} -o public/css/#{name}.css"
+simplywatch -d "assets/" -e "js" -i "_*.js" "dontcompile/*" -x "simplyimport -i #{path} -o public/js/#{name}.compiled.js"
 ```
 

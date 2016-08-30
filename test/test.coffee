@@ -5,13 +5,13 @@ should = chai.should()
 exec = require('child_process').exec
 
 
-suite "AssetWatcher", ()->
+suite "SimplyWatch", ()->
 	suiteSetup (done)-> fs.ensureDir 'test/temp', done
 	suiteTeardown (done)-> fs.remove 'test/temp', done
 
 	suite "Globs & Command Execution"
 		test "Will execute a given command on all matched files/dirs in a given glob when using explicit arguments", (done)->
-			exec "src/assetwatcher.coffee -g 'test/samples/sass/css/*' -x 'echo {{base}} >> test/temp/one'", (err)->
+			exec "src/simplywatch.coffee -g 'test/samples/sass/css/*' -x 'echo {{base}} >> test/temp/one'", (err)->
 				result = fs.readFileSync 'test/temp/one', {encoding:'utf8'}
 				resultLines = result.split('\n').filter (validLine)-> validLine
 
@@ -23,7 +23,7 @@ suite "AssetWatcher", ()->
 
 		
 		test "Will execute a given command on all matched files/dirs in a given glob when using positional arguments", (done)->
-			exec "src/assetwatcher.coffee 'test/samples/sass/css/*' 'echo {{base}} >> test/temp/two'", (err)->
+			exec "src/simplywatch.coffee 'test/samples/sass/css/*' 'echo {{base}} >> test/temp/two'", (err)->
 				result = fs.readFileSync 'test/temp/two', {encoding:'utf8'}
 				resultLines = result.split('\n').filter (validLine)-> validLine
 
@@ -35,7 +35,7 @@ suite "AssetWatcher", ()->
 
 
 		test "Placeholders can be used in the command which will be dynamically filled according to the subject path", (done)->
-			exec "src/assetwatcher.coffee -g 'test/samples/sass/css/*' -x 'echo \"{{name}} {{ext}} {{base}} {{reldir}} {{path}} {{dir}}\" >> test/temp/three'", (err)->
+			exec "src/simplywatch.coffee -g 'test/samples/sass/css/*' -x 'echo \"{{name}} {{ext}} {{base}} {{reldir}} {{path}} {{dir}}\" >> test/temp/three'", (err)->
 				result = fs.readFileSync 'test/temp/three', {encoding:'utf8'}
 				resultLines = result.split('\n').filter (validLine)-> validLine
 
@@ -47,7 +47,7 @@ suite "AssetWatcher", ()->
 
 
 		test "Placeholders can be denoted either with dual curly braces or a hash + single curly brace wrap", (done)->
-			exec "src/assetwatcher.coffee -g 'test/samples/sass/css/*' -x 'echo \"\#{name} \#{ext} \#{base} \#{reldir} \#{path} \#{dir}\" >> test/temp/four'", (err)->
+			exec "src/simplywatch.coffee -g 'test/samples/sass/css/*' -x 'echo \"\#{name} \#{ext} \#{base} \#{reldir} \#{path} \#{dir}\" >> test/temp/four'", (err)->
 				result = fs.readFileSync 'test/temp/four', {encoding:'utf8'}
 				resultLines = result.split('\n').filter (validLine)-> validLine
 

@@ -43,7 +43,7 @@ options =
 		default: false
 	'w': 
 		alias: 'wait'
-		describe: 'Execution delay, i.e. how long should the assetwatcher wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms.'
+		describe: 'Execution delay, i.e. how long should simplywatch wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms.'
 		type: 'number'
 		default: 1500
 	'W': 
@@ -59,7 +59,7 @@ path = require('path')
 fireworm = require('fireworm')
 exec = require('child_process').exec
 yargs = require('yargs')
-		.usage("Usage: assetwatcher -d <directory globs> -s <globs to skip> -i")
+		.usage("Usage: simplywatch -d <directory globs> -s <globs to skip> -i")
 		.options(options)
 		.help('h')
 		.alias('h', 'help')
