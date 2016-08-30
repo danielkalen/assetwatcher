@@ -1,12 +1,12 @@
 #!/usr/bin/env coffee
-fs = require('fs')
-glob = require('glob')
-chalk = require('chalk')
-path = require('path')
-fireworm = require('fireworm')
+fs = require 'fs'
+glob = require 'glob'
+chalk = require 'chalk'
+path = require 'path'
+fireworm = require 'fireworm'
 exec = require('child_process').exec
 regEx = require './regex'
-yargs = require('yargs')
+yargs = require 'yargs'
 yargs
 	.usage("#{chalk.bgYellow.black('Usage')} simplywatch -d <directory globs> -s <globs to skip> -i")
 	.options(require './cliOptions')
@@ -21,30 +21,30 @@ execHistory = {}
 filesToIgnoreExecFor = []
 finallyTimeout = null
 
+options = 
+	'dirs': args.d or args.dir# or args._[0]
+	'ignoreList': args.i or args.ignore
+	'ignoreWeakList': args.I or args.ignoreweak
+	'help': args.h or args.help
+	'silent': args.s or args.silent
+	'imports': args.t or args.imports
+	'onlyExt': args.e or args.extension
+	'runNow': args.n or args.now
+	'command': args.x or args.execute
+	'finalCommand': args.f or args.finally
+	'execDelay': args.w or args.wait
+	'finalExecDelay': args.W or args.finallywait
 
-dirs = args.d || args.dir
-ignore = args.i || args.ignore
-ignoreWeak = args.I || args.ignoreweak
-help = args.h || args.help
-silent = args.s || args.silent
-imports = args.t || args.imports
-onlyExt = args.e || args.extension
-runNow = args.n || args.now
-commandToExecute = args.x || args.execute
-finallyExecCommand = args.f || args.finally
-execDelay = args.w || args.wait
-finallyExecDelay = args.W || args.finallywait
 
 
-
-if help
+if options.help
 	process.stdout.write(yargs.help());
 	process.exit(0)
 
 
 
-if ignoreWeak
-	ignoreWeak.forEach (globToIgnore)->
+if options.ignoreWeakList
+	options.ignoreWeakList.forEach (globToIgnore)->
 		glob globToIgnore, (err, files)->
 			throw err if err
 
@@ -83,7 +83,7 @@ if ignoreWeak
 passedStartDelay = ()-> Date.now() - startTime > 3000
 passedExecDelay = (filePath)-> 
 	if execHistory[filePath]? 
-		passed = Date.now() - execHistory[filePath] > execDelay 
+		passed = Date.now() - execHistory[filePath] > options.execDelay 
 	else
 		passed = true
 
@@ -106,7 +106,7 @@ processFile = (filePath, watchedDir, eventType='changed')->
 			fs.readFile filePath, 'utf8', (err, data)->
 				if err then console.log(err); return
 	
-				if not silent and passedStartDelay()
+				if not options.silent and passedStartDelay()
 					console.log "File #{eventType}: #{filePath}"
 
 				captureImports(data, filePath)
@@ -142,7 +142,7 @@ captureImports = (fileContent, filePath)->
 		
 
 startExecutionFor = (filePath, watchedDir, eventType)->
-	return if not passedStartDelay() and not runNow
+	return if not passedStartDelay() and not options.runNow
 
 	if importHistory[filePath]? # Indicates this file is an import
 		importingFiles = importHistory[filePath]
@@ -152,12 +152,12 @@ startExecutionFor = (filePath, watchedDir, eventType)->
 
 executeCommandFor = (filePath, watchedDir, eventType)->
 	return if not passedExecDelay(filePath) or filesToIgnoreExecFor.indexOf(filePath) isnt -1
-	# return if Date.now() - execHistory[filePath] < execDelay
+	# return if Date.now() - execHistory[filePath] < options.execDelay
 	pathParams = path.parse filePath
 	pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1)
 	execHistory[filePath] = Date.now()
 
-	command = commandToExecute.replace regEx.placeholder, (entire, placeholder)->
+	command = options.command.replace regEx.placeholder, (entire, placeholder)->
 		if placeholder is 'path'
 			return filePath
 		
@@ -168,19 +168,19 @@ executeCommandFor = (filePath, watchedDir, eventType)->
 
 
 	exec command, (err, stdout, stderr)->
-		unless silent
+		unless options.silent
 			if err then console.log(err)
 			if stdout then console.log(stdout)
 			if stderr then console.log(stderr)
 			console.log "Finished executing command for \x1b[32m#{pathParams.base}\x1b[0m\n"
 			
-			clearTimeout(finallyTimeout) if finallyExecCommand
-			finallyTimeout = setTimeout(execFinallyCommand, finallyExecDelay) if finallyExecCommand
+			clearTimeout(finallyTimeout) if options.finalCommand
+			finallyTimeout = setTimeout(execFinallyCommand, options.finalExecDelay) if options.finalCommand
 
 
 execFinallyCommand = ()->
-	exec finallyExecCommand, (err, stdout, stderr)->
-		unless silent
+	exec options.finalCommand, (err, stdout, stderr)->
+		unless options.silent
 			if err then console.log(err)
 			if stdout then console.log(stdout)
 			if stderr then console.log(stderr)
@@ -196,17 +196,17 @@ execFinallyCommand = ()->
 # ==== Start Watching =================================================================================
 startTime = Date.now()
 
-dirs.forEach (dir)->
+options.dirs.forEach (dir)->
 	fw = fireworm dir
 
-	if onlyExt
-		onlyExt.forEach (ext)->
+	if options.onlyExt
+		options.onlyExt.forEach (ext)->
 			fw.add("**/*.#{ext}")
 	else
 		fw.add("**/*")
 
-	if ignore and ignore.length
-		ignore.forEach (globToIgnore)-> fw.ignore(globToIgnore)
+	if options.ignoreList?.length
+		options.ignoreList.forEach (globToIgnore)-> fw.ignore(globToIgnore)
 
 	dirName = if dir.charAt(dir.length-1) is '/' then dir.slice(0, dir.length-1) else dir
 	# dirName = dir
