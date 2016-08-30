@@ -60,17 +60,17 @@ passedExecDelay = (filePath)->
 
 # Process ============> chokidar -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
-startProcessingFileAdded = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir, 'added')
-startProcessingFile = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir)
+startProcessingFileAdded = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir, 'Added')
+startProcessingFile = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir, 'Changed')
 
-processFile = (filePath, watchedDir, eventType='changed')->	
+processFile = (filePath, watchedDir, type)->	
 	fs.stat filePath, (err, stats)-> if err then console.error(err) else if stats.isFile()
 		fs.readFile filePath, 'utf8', (err, data)-> if err then console.error(err) else
 			if not options.silent
-				console.log "File #{eventType}: #{filePath}"
+				console.log chalk.bgGreen.bgGreen.black(type)+' '+chalk.dim(filePath)
 
 			captureImports(data, filePath)
-			startExecutionFor(filePath, watchedDir, eventType)
+			startExecutionFor(filePath, watchedDir, type)
 
 
 
@@ -101,7 +101,7 @@ captureImports = (fileContent, filePath)->
 
 		
 
-startExecutionFor = (filePath, watchedDir, eventType)->
+startExecutionFor = (filePath, watchedDir, type)->
 	return if not passedStartDelay() and not options.runNow
 
 	if importHistory[filePath]? # Indicates this file is an import
@@ -179,7 +179,7 @@ options.dirs.forEach (dirPath)->
 	watcher.on('add', startProcessingFileAdded dirName)
 	watcher.on('change', startProcessingFile dirName)
 
-	console.log chalk.bgGreen.black('Watching')+' '+chalk.dim(dirPath)
+	console.log chalk.bgYellow.black('Watching')+' '+chalk.dim(dirPath)
 
 
 
