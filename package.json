@@ -22,7 +22,7 @@
   ],
   "main": "assetwatcher.js",
   "bin": {
-    "assetwatcher": "./assetwatcher.js"
+    "assetwatcher": "./dist/assetwatcher.js"
   },
   "author": "danielkalen",
   "repository": {
@@ -30,12 +30,16 @@
     "url": "https://github.com/danielkalen/assetwatcher"
   },
   "license": "MIT",
+  "mocha_opts": "-u tdd -b --compilers coffee:coffee-script/register --slow 500 --timeout 3000 -R spec",
   "scripts": {
-    "watch": "nodemon -e coffee -w ./src -x 'npm run compile'",
-    "compile": "coffee -o ./ -c src/assetwatcher.coffee && npm run prependbin && npm run makeexec",
-    "prependbin": "echo '#!/usr/bin/env node' | cat - assetwatcher.js > tmp.js && mv tmp.js assetwatcher.js",
-    "makeexec": "chmod +x assetwatcher.js",
-    "copytopublic": "cp -r -f ./ ../../sandbox-public/assetwatcher"
+    "watch": "nodemon -e coffee -w ./src -x 'npm run build'",
+    "build": "npm run compile && npm run prependbin && npm run makeexec",
+    "compile": "coffee -b -o ./dist -c src/assetwatcher.coffee",
+    "prependbin": "echo '#!/usr/bin/env node' | cat - dist/assetwatcher.js > dist/tmp.js && mv dist/tmp.js dist/assetwatcher.js",
+    "makeexec": "chmod +x dist/assetwatcher.js && chmod +x src/assetwatcher.coffee",
+    "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
+    "coverage:badge:": "coffee .config/badge-gen.coffee",
+    "test": "mocha $npm_package_mocha_opts"
   },
   "dependencies": {
     "bluebird": "^3.4.3",
