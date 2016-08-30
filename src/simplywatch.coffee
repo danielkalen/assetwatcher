@@ -14,17 +14,14 @@ yargs
 	.version()
 	.wrap(yargs.terminalWidth())
 args = yargs.argv
-
-
 importHistory = {}
 execHistory = {}
-filesToIgnoreExecFor = []
+filesToIgnore = []
 finallyTimeout = null
-
+startTime = Date.now()
 options = 
-	'dirs': args.d or args.dir# or args._[0]
+	'dirs': args.d or args.dir or args._[0]
 	'ignoreList': args.i or args.ignore
-	'ignoreWeakList': args.I or args.ignoreweak
 	'help': args.h or args.help
 	'silent': args.s or args.silent
 	'imports': args.t or args.imports
@@ -36,41 +33,9 @@ options =
 	'finalExecDelay': args.W or args.finallywait
 
 
-
 if options.help
 	process.stdout.write(yargs.help());
 	process.exit(0)
-
-
-
-if options.ignoreWeakList
-	options.ignoreWeakList.forEach (globToIgnore)->
-		glob globToIgnore, (err, files)->
-			throw err if err
-
-			# files = files.map (file)-> path.resolve(file)
-			filesToIgnoreExecFor = filesToIgnoreExecFor.concat(files)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -95,22 +60,17 @@ passedExecDelay = (filePath)->
 
 # Process ============> chokidar -> startProcessingFile[Added] -> processFile -> captureImports -> startExecutionFor -> executeCommandFor
 
-startProcessingFileAdded = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir, 'added')
-startProcessingFile = (watchedDir)-> return (filePath)-> processFile(filePath, watchedDir)
+startProcessingFileAdded = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir, 'added')
+startProcessingFile = (watchedDir)-> (filePath)-> processFile(filePath, watchedDir)
 
 processFile = (filePath, watchedDir, eventType='changed')->	
-	fs.stat filePath, (err, stats)->
-		if err then console.log(err); return
-		
-		if stats.isFile()
-			fs.readFile filePath, 'utf8', (err, data)->
-				if err then console.log(err); return
-	
-				if not options.silent and passedStartDelay()
-					console.log "File #{eventType}: #{filePath}"
+	fs.stat filePath, (err, stats)-> if err then console.error(err) else if stats.isFile()
+		fs.readFile filePath, 'utf8', (err, data)-> if err then console.error(err) else
+			if not options.silent
+				console.log "File #{eventType}: #{filePath}"
 
-				captureImports(data, filePath)
-				startExecutionFor(filePath, watchedDir, eventType)
+			captureImports(data, filePath)
+			startExecutionFor(filePath, watchedDir, eventType)
 
 
 
@@ -151,7 +111,7 @@ startExecutionFor = (filePath, watchedDir, eventType)->
 
 
 executeCommandFor = (filePath, watchedDir, eventType)->
-	return if not passedExecDelay(filePath) or filesToIgnoreExecFor.indexOf(filePath) isnt -1
+	return if not passedExecDelay(filePath) or filesToIgnore[filePath]?
 	# return if Date.now() - execHistory[filePath] < options.execDelay
 	pathParams = path.parse filePath
 	pathParams.reldir = pathParams.dir.replace(watchedDir, '').slice(1)
@@ -194,19 +154,18 @@ execFinallyCommand = ()->
 
 
 # ==== Start Watching =================================================================================
-startTime = Date.now()
+if options.ignoreList then options.ignoreList.forEach (ignoreGlob)->
+	glob ignoreGlob, (err, files)-> if err then throw err else
+		filesToIgnore = filesToIgnore.concat(files)
+
 
 options.dirs.forEach (dirPath)->
-	watcher = chokidar.watch(dirPath)
-
-	if options.ignoreList?.length
-		watcher.ignore(globToIgnore) for ignoreGlob in options.ignoreList
-	
+	watcher = chokidar.watch(dirPath, cwd:process.cwd())
 
 	if not options.specificExts
-		watcher.add("**/*")
+		watcher.add("#{dirPath}/**/*")
 	else
-		watcher.add("**/*.#{ext}") for ext in options.specificExts
+		watcher.add("#{dirPath}/**/*.#{ext}") for ext in options.specificExts
 
 
 	dirName = if dirPath.slice(-1)[0] is '/' then dirPath.slice(0,-1) else dirPath
