@@ -24,7 +24,6 @@ options =
 		demand: true
 	'f': 
 		alias: 'finally'
-		# describe: 'Command to execute once a single/group of files have changed. Waits 3 seconds and then executes.'
 		describe: 'Command to execute X ms (default: 3000) after the addition/change of the last file. For example if some file change triggered a command to be run for 10 files, after 3 seconds this "finally" command will be run once.'
 		type: 'string'
 	's': 
