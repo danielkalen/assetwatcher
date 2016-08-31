@@ -12,10 +12,6 @@ module.exports =
 		alias: 'ignoreweak'
 		describe: 'Specify all globs to weakly ignore in quotes, separated with commas. Changes to matching files WILL trigger an execution if imported by another file. Syntax: -s "globA" "globB"'
 		type: 'array'
-	'e': 
-		alias: 'extension'
-		describe: 'Only watch files that have a specific extension. Syntax: -e "ext1" "ext2"'
-		type: 'array'
 	'x': 
 		alias: 'execute'
 		describe: 'Command to execute upon file addition/change'

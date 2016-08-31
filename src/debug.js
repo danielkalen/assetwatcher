@@ -1,2 +1,2 @@
 require('coffee-script/register');
-require('./assetwatcher.coffee');
+require('./simplywatch.coffee');

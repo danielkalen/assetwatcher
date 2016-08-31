@@ -49,6 +49,10 @@
     "foreach-cli": "^1.5.0",
     "fs-extra": "^0.30.0",
     "glob": "^7.0.3",
+    "node-status": "^1.0.0",
+    "ora": "^0.3.0",
+    "simplyimport": "^2.1.1",
+    "window-size": "^0.2.0",
     "yargs": "^3.29.0"
   },
   "devDependencies": {
