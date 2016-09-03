@@ -1,0 +1,10 @@
+module.exports = 
+	'globs': []
+	'ignoreGlobs': []
+	'command': null
+	'processImports': true
+	'finalCommand': null
+	'execDelay': 1500
+	'finalCommandDelay': 500
+	'trim': null
+	'silent': false

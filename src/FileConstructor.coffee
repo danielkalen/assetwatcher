@@ -2,89 +2,132 @@ Promise = require 'bluebird'
 fs = Promise.promisifyAll require 'fs'
 Path = require 'path'
 exec = require('child_process').exec
-ora = require 'ora'
 chalk = require 'chalk'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
-progressBar = require './progressBar'
+watcher = require './watcher'
+eventsLog = require './eventsLog'
 
-File = (@filePath, @context, @options, scanOnly)->
-	@fileExt = Path.extname(@filePath)
+File = (@filePath, @watchContext, @options, eventType)->
+	@filePathShort = @filePath.replace process.cwd()+'/', ''
+	@fileDirShort = Path.dirname(@filePathShort)
 	@fileDir = Path.dirname(@filePath)
+	@fileExt = @getExtension()
+	@relDir = Path.dirname(@watchContext)
+	@relDir = if @relDir[0] is '.' then @relDir.slice(1) else @relDir
+	@relDir = @fileDirShort.replace @relDir, ''
 	@pathParams = Path.parse @filePath
-	@pathParams.reldir = @pathParams.dir.replace(@context, '').slice(1)
+	@pathParams.reldir = @relDir.slice(1)
 	@deps = []
 	@imports = []
 	@lastProcessed = null
+	@lastScanned = null
+	@execCount = 1
 
-	return @process(true, scanOnly)
+	return @process(eventType)
 
 
 
 
-File::process = (isFirstTime, scanOnly)->
-	unless scanOnly
-		eventType = if isFirstTime then 'Added' else 'Changed'
-		console.log chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(@filePath)
+File::getExtension = ()->
+	extension = Path.extname(@filePath)
 	
-	@scanProcedure = Promise.bind(@).then(@getContents).then(@scanForImports)
+	if extension
+		return extension
+	else
+		pathsToTry = ["#{@filePath}.js", "#{@filePath}.coffee", "#{@filePath}.sass", "#{@filePath}.scss"]
+
+		for path in pathsToTry then try
+			if fs.statSync(path).isFile()
+				extension = Path.extname(path)
+				break
+
+		if extension
+			@filePath += extension
+			fileInstances[@filePath] = @
+		
+		return extension or ''
+
+
+
+File::process = (eventType)->
+	unless eventType is 'scan' or not eventType
+		eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(@filePathShort)
+
+	
+	if @canScanImports()
+		@lastScanned = Date.now()
+		@scanProcedure = Promise.bind(@).then(@getContents).then(@scanForImports)
+
 	return @
 
 
 
-File::getContents = ()-> new Promise (finalResolve)=>
-	if @fileExt
-		pathsToTry = [@filePath, @filePath]
+File::getContents = ()-> new Promise (resolve)=>
+	if not @fileExt then resolve()
 	else
-		pathsToTry = ["#{@filePath}.js", "#{@filePath}.coffee", "#{@filePath}.sass", "#{@filePath}.scss"]
-
-	Promise.reduce(pathsToTry, (t,path)-> new Promise (resolve, reject)->
-		# process.count ?= 0
-		# if process.count++ < 3 then console.log t,path
-		fs.readFileAsync(path, {encoding:'utf8'}).then(reject, resolve)
-	).catch (@content)=> finalResolve()
+		fs.readFileAsync(@filePath, {encoding:'utf8'})
+			.then (@content)=> resolve()
+			.catch(resolve)
 
 
 
 
 
-File::scanForImports = ()-> if typeof @content is 'string'
-	SimplyImport.scanImports(@content, true, true, true)
+
+File::scanForImports = ()-> new Promise (resolve)=>
+	@imports.length = 0
+	
+	SimplyImport.scanImports(@content or '', true, true)
 		.forEach (childPath)=>
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
-			childFile = getFile(childPath, @context, @options, true)
-		
+			childFile = getFile(childPath, @watchContext, @options, 'scan')
+
+			watcher.add(childFile.filePathShort)
 			@imports.push(childFile) unless @imports.includes(childFile)
 			childFile.deps.push(@) unless childFile.deps.includes(@)
 
-
-
-File::canExecuteCommand = ()->
-	if @lastProcessed?
-		return Date.now() - @lastProcessed > @options.execDelay
+	if @imports.length is 0
+		resolve()
 	else
-		return true
+		Promise
+			.map @imports, (childFile)-> childFile.scanProcedure
+			.then ()-> resolve()
+
 
 
 
 File::prepareCommandString = (command)->
-	command.replace regEx.placeholder, (entire, placeholder)=> switch
-		when placeholder is 'path' then @filePath
+	formattedCommand = command.replace regEx.placeholder, (entire, placeholder)=> switch
+		when placeholder is 'path' then @filePathShort
 		when @pathParams[placeholder]? then @pathParams[placeholder]
 		else entire
 
+	formattedCommand = "FORCE_COLOR=true #{formattedCommand}"
 
 
-File::executeCommand = (command)-> new Promise (resolve)=> if @canExecuteCommand()
+
+File::executeCommand = (command)-> new Promise (resolve)=> #if not @canExecuteCommand(invokeTime) then resolve({}) else
 	command = @prepareCommandString(command)
 	@lastProcessed = Date.now()
-	@spinner = ora("Executing command: #{chalk.dim(@filePath)}").start()
-
 
 	exec command, (err, stdout, stderr)=>
-		if err then @spinner.fail() else @spinner.succeed()
 		resolve({err, stdout, stderr})
 
+
+
+File::canExecuteCommand = (invokeTime)->
+	if @lastProcessed?
+		return invokeTime - @lastProcessed > @options.execDelay
+	else
+		return true
+
+
+File::canScanImports = ()->
+	if @lastScanned?
+		return Date.now() - @lastScanned > 150
+	else
+		return true
 
 
 
@@ -96,5 +139,5 @@ File::executeCommand = (command)-> new Promise (resolve)=> if @canExecuteCommand
 
 
 fileInstances = {}
-module.exports = getFile = (filePath, context, options, scanOnly)->
-	fileInstances[filePath]?.process(null, scanOnly) or fileInstances[filePath] = new File(filePath, context, options, scanOnly)
+module.exports = getFile = (filePath, watchContext, options, eventType)->
+	fileInstances[filePath]?.process(eventType) or fileInstances[filePath] = new File(filePath, watchContext, options, eventType)

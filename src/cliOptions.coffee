@@ -1,16 +1,11 @@
 module.exports =
-	'd': 
-		alias: 'dir'
-		describe: 'Specify all dirs to watch for in quotes, separated with commas. Syntax: -d "dirA" "dirB"'
+	'g': 
+		alias: 'glob'
+		describe: 'glob/dir to watch. Multiple globs can be passed: -g "globA" "globB"'
 		type: 'array'
-		demand: true
 	'i': 
 		alias: 'ignore'
-		describe: 'Specify all globs to ignore in quotes, separated with commas. Changes to matching files will NOT trigger any executions even if imported by another file. Syntax: -s "globA" "globB"'
-		type: 'array'
-	'I': 
-		alias: 'ignoreweak'
-		describe: 'Specify all globs to weakly ignore in quotes, separated with commas. Changes to matching files WILL trigger an execution if imported by another file. Syntax: -s "globA" "globB"'
+		describe: 'glob/dir to ignore. Multiple globs can be passed: -g "globA" "globB"'
 		type: 'array'
 	'x': 
 		alias: 'execute'
@@ -19,30 +14,30 @@ module.exports =
 		demand: true
 	'f': 
 		alias: 'finally'
-		describe: 'Command to execute X ms (default: 3000) after the addition/change of the last file. For example if some file change triggered a command to be run for 10 files, after 3 seconds this "finally" command will be run once.'
+		describe: 'Command to execute *once* after all changed files have been processed. Example: if a file change triggered a command to be executed for 10 files, this "finally" command will be executed after the time specified in --finalyWait'
 		type: 'string'
-	's': 
-		alias: 'silent'
-		describe: 'Suppress any output from the executing command'
-		type: 'boolean'
-		default: false
-	'n': 
-		alias: 'now'
-		describe: 'Execute the command for all files matched immediatly on startup'
-		type: 'boolean'
-		default: false
-	't': 
-		alias: 'imports'
-		describe: 'Optionally compile files that are imported by other files.'
-		type: 'boolean'
-		default: false
-	'w': 
-		alias: 'wait'
-		describe: 'Execution delay, i.e. how long should simplywatch wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms.'
+	'd': 
+		alias: 'delay'
+		describe: 'Execution delay, i.e. how long should simplywatch wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms'
 		type: 'number'
 		default: 1500
-	'W': 
-		alias: 'finallywait'
-		describe: 'The amount of milliseconds to wait before executing the finally command (if passed).'
+	'D': 
+		alias: 'finallyDelay'
+		describe: 'The amount of milliseconds to wait before executing the "finally" command'
 		type: 'number'
-		default: 3000
+		default: 500
+	't': 
+		alias: 'trim'
+		describe: 'Trims the output of the command executions to only show the first X charachters of the output'
+		type: 'number'
+		default: undefined
+	's': 
+		alias: 'silent'
+		describe: 'Suppress any output from the executing command (including errors)'
+		type: 'boolean'
+		default: false
+	'p': 
+		alias: 'processImports'
+		describe: 'Execute the command for files that are imported by other files'
+		type: 'boolean'
+		default: false
