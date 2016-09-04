@@ -203,7 +203,7 @@ suite "SimplyWatch", ()->
 		test "Error messages from commands will be outputted to the terminal as well", ()->
 			stdout = ''
 			removeInterceptor = interceptStdout (data)-> stdout += data; return ''
-			options = globs:['test/samples/js/*'], command:'echo {{name}} > test/temp/three.5 && >&2 echo "{{name}}" && exit 1'
+			options = globs:['test/samples/js/*'], command:'echo {{name}} > test/temp/three.5 && >&2 echo "{{name}}" && exit 2'
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.5', false).then ()->
@@ -237,7 +237,7 @@ suite "SimplyWatch", ()->
 		test "If the command exits with a non-zero status code and there isn't any stdout, the actual error message will be written to the terminal", ()->
 			stdout = ''
 			removeInterceptor = interceptStdout (data)-> stdout += data; return ''
-			options = globs:['test/samples/js/*'], command:'echo > test/temp/three.5.5.5 && exit 1'
+			options = globs:['test/samples/js/*'], command:'echo > test/temp/three.5.5.5 && exit 2'
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.5.5.5', false).then ()->
@@ -399,7 +399,7 @@ suite "SimplyWatch", ()->
 			test "If the final command exits with a non-zero status code the error message will be written to the terminal", ()-> if process.env.CI then @skip() else
 				stdout = ''
 				removeInterceptor = interceptStdout (data)-> stdout += data; return ''
-				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten.5 && exit 1', finalCommandDelay:1
+				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten.5 && exit 2', finalCommandDelay:1
 				
 				SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 					triggerFileChange('test/samples/js/mainDiff.js', 'test/temp/ten.5', false).then ({result, resultLines})->
