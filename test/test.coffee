@@ -164,7 +164,7 @@ suite "SimplyWatch", ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/one').then ({result, resultLines})->
 					expect(resultLines[0]).to.equal 'mainCopy.js'
 					
-					# watcher.close()
+					watcher.close()
 					done()
 		
 
