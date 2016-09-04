@@ -50,14 +50,14 @@ File.prototype.getExtension = function() {
     for (i = 0, len = pathsToTry.length; i < len; i++) {
       path = pathsToTry[i];
       try {
-        if (fs.statSync(path).isFile()) {
-          extension = Path.extname(path);
-          break;
-        }
+        fs.statSync(path);
+        extension = Path.extname(path);
+        break;
       } catch (undefined) {}
     }
     if (extension) {
       this.filePath += extension;
+      this.filePathShort += extension;
       fileInstances[this.filePath] = this;
     }
     return extension || '';
@@ -100,10 +100,8 @@ File.prototype.scanForImports = function() {
         var childFile;
         childPath = Path.normalize(_this.fileDir + "/" + childPath);
         childFile = getFile(childPath, _this.watchContext, _this.options, 'scan');
-        watcher.add(childFile.filePathShort);
-        if (!_this.imports.includes(childFile)) {
-          _this.imports.push(childFile);
-        }
+        watcher.add(childFile.filePath);
+        _this.imports.push(childFile);
         if (!childFile.deps.includes(_this)) {
           return childFile.deps.push(_this);
         }

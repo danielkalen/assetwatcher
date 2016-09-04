@@ -38,12 +38,13 @@ File::getExtension = ()->
 		pathsToTry = ["#{@filePath}.js", "#{@filePath}.coffee", "#{@filePath}.sass", "#{@filePath}.scss"]
 
 		for path in pathsToTry then try
-			if fs.statSync(path).isFile()
-				extension = Path.extname(path)
-				break
+			fs.statSync(path) # Will throw an error (an not execute the code below) if it doesn't exist
+			extension = Path.extname(path)
+			break
 
 		if extension
 			@filePath += extension
+			@filePathShort += extension
 			fileInstances[@filePath] = @
 		
 		return extension or ''
@@ -83,8 +84,8 @@ File::scanForImports = ()-> new Promise (resolve)=>
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
 			childFile = getFile(childPath, @watchContext, @options, 'scan')
 
-			watcher.add(childFile.filePathShort)
-			@imports.push(childFile) unless @imports.includes(childFile)
+			watcher.add(childFile.filePath)
+			@imports.push(childFile)
 			childFile.deps.push(@) unless childFile.deps.includes(@)
 
 	if @imports.length is 0

@@ -40,7 +40,7 @@
     "prependbin": "echo '#!/usr/bin/env node' | cat - dist/cli.js > dist/bin && rm -rf dist/cli.js",
     "makeexec": "chmod +x dist/bin && chmod +x src/cli.coffee",
     "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
-    "coverage:badge:": "coffee .config/badge-gen.coffee",
+    "coverage:badge": "coffee .config/badge-gen.coffee",
     "test": "fromSrc=true mocha $npm_package_mocha_opts"
   },
   "dependencies": {
@@ -64,6 +64,7 @@
     "execa": "^0.4.0",
     "foreach-cli": "^1.6.0",
     "fs-extra": "^0.30.0",
+    "intercept-stdout": "^0.1.2",
     "istanbul": "^0.4.5",
     "lcov-parse": "0.0.10",
     "mocha": "^3.0.2",

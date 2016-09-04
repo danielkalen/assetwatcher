@@ -7,7 +7,7 @@ Promise.config({
   cancellation: true
 });
 
-Glob = require('glob');
+Glob = Promise.promisify(require('glob'));
 
 Path = require('path');
 
@@ -34,9 +34,6 @@ eventsLog = require('./eventsLog');
 defaultOptions = require('./defaultOptions');
 
 module.exports = function(passedOptions) {
-  if (passedOptions == null) {
-    passedOptions = {};
-  }
   return new Promise(function(resolve) {
     var formatOutputMessage, isIgnored, options, processFile, queue, scanInitial;
     options = extend({}, defaultOptions, passedOptions);
@@ -64,23 +61,16 @@ module.exports = function(passedOptions) {
     };
     scanInitial = function(globToScan) {
       return Glob(globToScan, {
-        nodir: true
-      }, function(err, files) {
-        var filePath, i, len, results;
-        if (err) {
-          throw err;
-        } else {
-          results = [];
-          for (i = 0, len = files.length; i < len; i++) {
-            filePath = files[i];
-            filePath = absPath(filePath);
-            if (!filePath.includes('.git')) {
-              results.push(getFile(filePath, globToScan, options, 'scan'));
-            } else {
-              results.push(void 0);
-            }
+        nodir: true,
+        dot: true
+      }).then(function(files) {
+        var filePath, i, len;
+        for (i = 0, len = files.length; i < len; i++) {
+          filePath = files[i];
+          filePath = absPath(filePath);
+          if (!filePath.includes('.git')) {
+            getFile(filePath, globToScan, options, 'scan');
           }
-          return results;
         }
       });
     };
@@ -248,14 +238,14 @@ module.exports = function(passedOptions) {
           for (file in ref) {
             message = ref[file];
             process.stdout.write('\n' + chalk.bgWhite.black.bold("Output") + ' ' + chalk.dim(file));
-            process.stdout.write('\n' + message);
+            process.stdout.write('\n' + formatOutputMessage(message) + '\n');
             delete this.executionLogs.log[file];
           }
           ref1 = this.executionLogs.error;
           for (file in ref1) {
             message = ref1[file];
             process.stdout.write('\n' + chalk.bgRed.white.bold("Error") + ' ' + chalk.dim(file));
-            process.stdout.write('\n' + message);
+            process.stdout.write('\n' + formatOutputMessage(message) + '\n');
             delete this.executionLogs.error[file];
           }
           process.stdout.write(divider);
@@ -271,8 +261,6 @@ module.exports = function(passedOptions) {
       dirName = dirPath.slice(-1)[0] === '/' ? dirPath.slice(0, -1) : dirPath;
       if (dirName[0] === '.') {
         dirName = dirName.slice(2);
-      } else if (dirName[0] === '/') {
-        dirName = dirName.slice(1);
       }
       watcher.on('add', processFile(dirName, 'Added'));
       watcher.on('change', processFile(dirName, 'Changed'));

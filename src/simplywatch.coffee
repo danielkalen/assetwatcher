@@ -1,6 +1,6 @@
 Promise = require 'bluebird'
 Promise.config cancellation:true
-Glob = require 'glob'
+Glob = Promise.promisify require 'glob'
 Path = require 'path'
 exec = require('child_process').exec
 absPath = require 'abs'
@@ -21,7 +21,7 @@ defaultOptions = require './defaultOptions'
 
 
 
-module.exports = (passedOptions={})-> new Promise (resolve)->
+module.exports = (passedOptions)-> new Promise (resolve)->
 	options = extend({}, defaultOptions, passedOptions)
 	if typeof options.globs is 'string' then options.globs = [options.globs]
 	if options.globs.length is 0 then throw new Error "No globs were provided"
@@ -38,10 +38,11 @@ module.exports = (passedOptions={})-> new Promise (resolve)->
 
 
 	scanInitial = (globToScan)->
-		Glob globToScan, {nodir:true}, (err, files)-> if err then throw err else
+		Glob(globToScan, {nodir:true, dot:true}).then (files)->
 			for filePath in files
 				filePath = absPath(filePath)
 				getFile(filePath, globToScan, options, 'scan') unless filePath.includes('.git')
+			return
 
 
 	isIgnored = (path)->
@@ -158,12 +159,12 @@ module.exports = (passedOptions={})-> new Promise (resolve)->
 				
 				for file,message of @executionLogs.log
 					process.stdout.write '\n'+chalk.bgWhite.black.bold("Output")+' '+chalk.dim(file)
-					process.stdout.write '\n'+message
+					process.stdout.write '\n'+formatOutputMessage(message)+'\n'
 					delete @executionLogs.log[file]
 				
 				for file,message of @executionLogs.error
 					process.stdout.write '\n'+chalk.bgRed.white.bold("Error")+' '+chalk.dim(file)
-					process.stdout.write '\n'+message
+					process.stdout.write '\n'+formatOutputMessage(message)+'\n'
 					delete @executionLogs.error[file]
 				
 				process.stdout.write divider
@@ -195,11 +196,10 @@ module.exports = (passedOptions={})-> new Promise (resolve)->
 			scanInitial(dirPath)
 
 			dirName = if dirPath.slice(-1)[0] is '/' then dirPath.slice(0,-1) else dirPath
-
-			if dirName[0] is '.'
-				dirName = dirName.slice(2)
-			else if dirName[0] is '/'
-				dirName = dirName.slice(1)
+			dirName = dirName.slice(2) if dirName[0] is '.'
+			# dirName = switch dirName[0]
+			# 	when '.' then dirName.slice(2)
+			# 	when '/' then dirName.slice(1)
 			
 
 			watcher.on 'add', processFile(dirName, 'Added')

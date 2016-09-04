@@ -40,4 +40,4 @@ module.exports =
 		alias: 'processImports'
 		describe: 'Execute the command for files that are imported by other files'
 		type: 'boolean'
-		default: false
+		default: true

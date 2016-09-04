@@ -38,7 +38,7 @@ downloadBadge = (name)->
 		lcovParse "#{lcovDirPath}/lcov.info", (err, parsed)-> if err then console.warn(err) else
 			values = calcCoverage(parsed[0])
 			
-			request genBadgeUrl("coverage (#{name})", values.coverage, values.color)
+			request genBadgeUrl("coverage", values.coverage, values.color)
 				.pipe fs.createOutputStream("#{destPath}.svg")
 				
 				.on 'finish', (err)-> if err then console.error(err) else
