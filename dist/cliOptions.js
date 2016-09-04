@@ -18,7 +18,7 @@ module.exports = {
   },
   'f': {
     alias: 'finally',
-    describe: 'Command to execute *once* after all changed files have been processed. Example: if a file change triggered a command to be executed for 10 files, this "finally" command will be executed after the time specified in --finalyWait',
+    describe: 'Command to execute *once* after all changed files have been processed. Example: if a file change triggered a command to be executed for 10 files, this "finally" command will be executed after the time specified in --finallyDelay',
     type: 'string'
   },
   'd': {
@@ -35,7 +35,7 @@ module.exports = {
   },
   't': {
     alias: 'trim',
-    describe: 'Trims the output of the command executions to only show the first X charachters of the output',
+    describe: 'Trims the output of the command executions to only show the first X characters of the output',
     type: 'number',
     "default": void 0
   },
@@ -44,11 +44,5 @@ module.exports = {
     describe: 'Suppress any output from the executing command (including errors)',
     type: 'boolean',
     "default": false
-  },
-  'p': {
-    alias: 'processImports',
-    describe: 'Execute the command for files that are imported by other files',
-    type: 'boolean',
-    "default": true
   }
 };

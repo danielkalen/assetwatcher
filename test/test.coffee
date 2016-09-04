@@ -33,7 +33,9 @@ triggerFileChange = (filePath, resultPath, shouldIntercept=true)-> new Promise (
 		removeInterceptor = interceptStdout(()-> '') if shouldIntercept
 		
 		fs.writeFileAsync(filePath, contents).then ()->
-			if not resultPath then resolve(emptyResults)
+			if not resultPath
+				removeInterceptor() if shouldIntercept
+				resolve(emptyResults)
 			else
 				onFsChange = ()->
 					testWatcher.removeListener 'add', onFsChange
@@ -194,6 +196,56 @@ suite "SimplyWatch", ()->
 
 						watcher.close()
 						done()
+			
+
+			
+
+		test "Error messages from commands will be outputted to the terminal as well", ()->
+			stdout = ''
+			removeInterceptor = interceptStdout (data)-> stdout += data; return ''
+			options = globs:['test/samples/js/*'], command:'echo {{name}} > test/temp/three.5 && >&2 echo "{{name}}" && exit 1'
+			
+			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
+				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.5', false).then ()->
+					removeInterceptor()
+					expect(stdout).to.include "Error"
+					expect(stdout).to.include "mainCopy"
+
+					watcher.close()
+					done()
+			
+
+			
+
+		test "Error messages from commands will be treated as stdout if the command's exit code was 0", ()->
+			stdout = ''
+			removeInterceptor = interceptStdout (data)-> stdout += data; return ''
+			options = globs:['test/samples/js/*'], command:'echo {{name}} > test/temp/three.5.5 && >&2 echo "{{name}}"'
+			
+			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
+				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.5.5', false).then ()->
+					removeInterceptor()
+					expect(stdout).not.to.include "Error"
+					expect(stdout).to.include "mainCopy"
+
+					watcher.close()
+					done()
+			
+
+			
+
+		test "If the command exits with a non-zero status code and there isn't any stdout, the actual error message will be written to the terminal", ()->
+			stdout = ''
+			removeInterceptor = interceptStdout (data)-> stdout += data; return ''
+			options = globs:['test/samples/js/*'], command:'echo > test/temp/three.5.5.5 && exit 1'
+			
+			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
+				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.5.5.5', false).then ()->
+					removeInterceptor()
+					expect(stdout).to.include "Error: Command failed:"
+
+					watcher.close()
+					done()
 
 
 
@@ -322,6 +374,39 @@ suite "SimplyWatch", ()->
 					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/nine').then ({result, resultLines})->
 						expect(resultLines[0]).to.equal 'Final command executed'
 						
+						watcher.close()
+						done()
+
+
+			
+			test "The final command will only execute once in a given delay (options.finalCommandDelay)", ()->
+				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten', finalCommandDelay:500
+				
+				SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
+					triggerFileChange('test/samples/js/mainCopy.js', null).then ()->
+						setTimeout ()->
+							triggerFileChange('test/samples/js/mainCopy2.js', 'test/temp/ten').then ({result, resultLines})->
+								expect(resultLines.length).to.equal 1
+								expect(resultLines[0]).to.equal 'Final command executed'
+								
+								watcher.close()
+								done()
+						, 400
+			
+
+			
+
+			test "If the final command exits with a non-zero status code the error message will be written to the terminal", ()->
+				stdout = ''
+				removeInterceptor = interceptStdout (data)-> stdout += data; return ''
+				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten.5 && exit 1', finalCommandDelay:1
+				
+				SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
+					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/ten.5', false).then ({result, resultLines})->
+						removeInterceptor()
+						expect(resultLines[0]).to.equal 'Final command executed'
+						expect(stdout).to.include "Error: Command failed:"
+
 						watcher.close()
 						done()
 

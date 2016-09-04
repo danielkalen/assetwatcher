@@ -2,11 +2,12 @@
 chalk = require 'chalk'
 yargs = require 'yargs'
 yargs
-	.usage("#{chalk.bgYellow.black('Usage')} simplywatch -d <directory globs> -s <globs to skip> -i")
+	.usage("#{chalk.bgYellow.black('Usage')} simplywatch -g <glob> -x <command to execute> [options]")
 	.options(require './cliOptions')
-	.help('h')
-	.version()
+	.epilogue(require './cliExtraMessage')
 	.wrap(yargs.terminalWidth())
+	.help('h')
+	.version(()-> require('../package.json').version)
 args = yargs.argv
 
 options = 

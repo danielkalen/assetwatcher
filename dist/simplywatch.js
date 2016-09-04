@@ -99,6 +99,9 @@ module.exports = function(passedOptions) {
       this.add = function(filePath, watchContext, eventType) {
         var file;
         file = getFile(filePath, watchContext, options, eventType);
+        if (eventType && !isIgnored(file.filePath)) {
+          eventsLog.add(chalk.bgGreen.bgGreen.black(eventType) + ' ' + chalk.dim(file.filePathShort));
+        }
         return file.scanProcedure.then((function(_this) {
           return function() {
             var depFile, fileDeps, i, len, ref, results;
@@ -153,7 +156,7 @@ module.exports = function(passedOptions) {
           return function() {
             return new Promise(function(resolve) {
               var tasks;
-              eventsLog.output(logIteration);
+              eventsLog.output(logIteration, isIgnored);
               tasks = new Listr(list.map(function(file) {
                 return {
                   title: "Executing command: " + (chalk.dim(file.filePathShort)),
@@ -255,15 +258,10 @@ module.exports = function(passedOptions) {
       return this;
     };
     return Promise.map(options.globs, function(dirPath) {
-      var dirName;
       watcher.add(dirPath);
       scanInitial(dirPath);
-      dirName = dirPath.slice(-1)[0] === '/' ? dirPath.slice(0, -1) : dirPath;
-      if (dirName[0] === '.') {
-        dirName = dirName.slice(2);
-      }
-      watcher.on('add', processFile(dirName, 'Added'));
-      watcher.on('change', processFile(dirName, 'Changed'));
+      watcher.on('add', processFile(dirPath, 'Added'));
+      watcher.on('change', processFile(dirPath, 'Changed'));
       return console.log(chalk.bgYellow.black('Watching') + ' ' + chalk.dim(dirPath));
     }).then(function() {
       return resolve(watcher);

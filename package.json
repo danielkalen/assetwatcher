@@ -1,11 +1,13 @@
 {
   "name": "simplywatch",
   "version": "2.0.0",
-  "description": "Smarter file change watcher supporting executing commands for files individually and ignoration of imported files.",
+  "description": "Watches files and upon change executes a command for each file INDIVIDUALLY with file-related params",
   "keywords": [
     "asset-watch",
     "assetwatch",
-    "asset",
+    "assetwatcher",
+    "asset-pipeline",
+    "pipeline",
     "js-watch",
     "jswatch",
     "jswatcher",

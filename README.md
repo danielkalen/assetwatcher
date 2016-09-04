@@ -1,5 +1,16 @@
 # SimplyWatch
-A command line tool inspired by [smartwatch](https://www.npmjs.com/package/smartwatch) that monitors files under a given directory and individually  executes commands (with optional dynamic placeholders) for changed/added files.
+[![Build Status](https://travis-ci.org/danielkalen/simplywatch.svg?branch=master)](https://travis-ci.org/danielkalen/simplywatch)
+[![Coverage](.config/badges/coverage-node.png?raw=true)](https://github.com/danielkalen/simplyimport)
+[![Code Climate](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/badges/bff51b9d181be94abb2b/gpa.svg)](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/feed)
+A command line tool that monitors files under a given glob and individually  executes commands (with optional dynamic placeholders) for the changed/added files.
+
+What makes SimplyWatch different from the *few* similar packages available on NPM is:
+1. It is intergrated with [node-sass](https://www.npmjs.com/package/node-sass) and [simplyimport](https://www.npmjs.com/package/simplyimport) in which discovered files are scanned for import declarations and if SimplyWatch detects a change in any of the imported files, the provided command will be executed for the importing file. *Example: 'FileA' and 'FileB' both import 'ChildFile' - when 'ChildFile' changes the command is executed for both 'FileA' and 'FileB'. Note that the imported file doesn't have to be in the provided glob, and will be watched for changes upon discovery.*
+2. It executes the commands concurrently. A scenario in which this is useful is when multiple files import the same child file and once the child file changes the command is executed for all importing files.
+3. It provides debouncing: if a file is changed multiple times in a very short timeframe (i.e. under 2 seconds), the command will only be executed once in that time frame. *Note: The default delay is 1500ms, and can be changed by specifying a different value to [-d || -execDelay]*
+4. It stacks execution tasks in order: If a file change triggers the command to be executed for it and then changes again (possibly multiple times) while the first command is still executing then the next command[s] will wait until the previous one finishes before being executed.
+5. It can execute a final command after a given delay once SimplyWatch finishes processing a file change/addition batch. *Example: once the compile command is executed for the source files, copy them to the dist/ folder and restart the server.*
+6. It can trim the messages outputted from the commands to a certain # of characters. This is useful for example when commands encounter an error they output the entire file's content in order to highlight a line that triggered the error, which can sometimes result in extremely large console outputs.
 
 
 Installation:
@@ -11,52 +22,32 @@ npm install simplywatch
 
 Usage:
 ------
-**Command Line**
+**Command Line Usage**
 ```
-simplywatch -d <dirs> -i <globs to ignore> -e <specific extension> -x <command to execute> -[s|t]
+simplywatch -g <glob> -x <command to execute> [options]
 ```
 
-**Command Line Options:**
+**Options:**
 
 ```bash
--d, --dir          Specify all dirs to watch for in quotes, separated with
-                   commas. Syntax: -d "dirA" "dirB"         [array] [required]
--i, --ignore       Specify all globs to ignore in quotes, separated with
-                   commas. Changes to matching files will NOT trigger any
-                   executions even if imported by another file. Syntax: -s
-                   "globA" "globB"                                     [array]
--I, --ignoreweak   Specify all globs to weakly ignore in quotes, separated
-                   with commas. Changes to matching files WILL trigger an
-                   execution if imported by another file. Syntax: -s "globA"
-                   "globB"                                             [array]
--e, --extension    Only watch files that have a specific extension. Syntax: -e
-                   "ext1" "ext2"                                       [array]
--x, --execute      Command to execute upon file addition/change
-                                                           [string] [required]
--f, --finally      Command to execute X ms (default: 3000) after the
-                   addition/change of the last file. For example if some file
-                   change triggered a command to be run for 10 files, after 3
-                   seconds this "finally" command will be run once.   [string]
--s, --silent       Suppress any output from the executing command
-                                                    [boolean] [default: false]
--n, --now          Execute the command for all files matched immediatly on
-                   startup                          [boolean] [default: false]
--t, --imports      Optionally compile files that are imported by other files.
-                                                    [boolean] [default: false]
--w, --wait         Execution delay, i.e. how long should the simplywatch wait
-                   before re-executing the command. If the watched file
-                   changes rapidly, the command will execute only once every X
-                   ms.                                         [default: 1500]
--W, --finallywait  The amount of milliseconds to wait before executing the
-                   finally command (if passed).                [default: 3000]
--h, --help         Show help                                         [boolean]
+-g, --glob          glob/dir to watch. Multiple globs can be passed: -g "globA" "globB"
+-i, --ignore        glob/dir to ignore. Multiple globs can be passed: -g "globA" "globB"
+-x, --execute       Command to execute upon file addition/change
+-f, --finally       Command to execute *once* after all changed files have been processed. Example: if a file change triggered a command to be executed for 10 files, this "finally" command will be executed after the time specified in --finallyDelay
+-d, --delay         Execution delay, i.e. how long should simplywatch wait before re-executing the command. If the watched file changes rapidly, the command will execute only once every X ms
+-D, --finallyDelay  The amount of milliseconds to wait before executing the "finally" command
+-t, --trim          Trims the output of the command executions to only show the first X characters of the output
+-s, --silent        Suppress any output from the executing command (including errors)
+-h, --help          Show help
+--version           Show version number                                     
 ```
-**Executing Command Placeholders**
+
+**Execution Command Placeholders**
 ```
 "path"  -  full path and filename
 "root"  -  file root
 "dir"   -  path without the filename
-"reldir"-  directory name of file relative to the current working directory
+"reldir"-  directory name of file relative to the glob provided
 "base"  -  file name and extension
 "ext"   -  just file extension
 "name"  -  just file name
@@ -69,9 +60,8 @@ simplywatch -d <dirs> -i <globs to ignore> -e <specific extension> -x <command t
 
 Example:
 ------
-#### Command Line:
 ```
-simplywatch -d "assets/" -e "sass" -x "node-sass #{path} -o public/css/#{name}.css"
-simplywatch -d "assets/" -e "js" -i "_*.js" "dontcompile/*" -x "simplyimport -i #{path} -o public/js/#{name}.compiled.js"
+simplywatch -g "assets/**" -x "node-sass #{path} -o dist/css/#{name}.css"
+simplywatch -g "assets/*.coffee" -i "dontCompile/*" -x "cat {{path}} | coffee -s -c > dist/{{name}}.js"
 ```
 

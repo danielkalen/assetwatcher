@@ -28,7 +28,6 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 	if not options.command then throw new Error "Execution command not provided"
 
 
-
 	formatOutputMessage = (message)-> if options.trim then message.slice(0, options.trim) else message
 
 
@@ -54,6 +53,9 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 
+
+
+
 	queue = new ()->
 		@list = {}
 		@executionLogs = 'log':{}, 'error':{}
@@ -62,6 +64,9 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		
 		@add = (filePath, watchContext, eventType)->
 			file = getFile(filePath, watchContext, options, eventType)
+
+			if eventType and not isIgnored(file.filePath)
+				eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.filePathShort)
 			
 			file.scanProcedure.then ()=>
 				fileDeps = file.deps
@@ -77,6 +82,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 
+
 		@beginProcess = ()->
 			clearTimeout(@timeout.process)
 			@timeout.process = setTimeout ()=>
@@ -88,12 +94,13 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		
 
 
+
 		@process = (list)->
 			logIteration = eventsLog.iteration++
 			invokeTime = Date.now()
 			
 			@lastTasklist = @lastTasklist.then ()=> new Promise (resolve)=>
-				eventsLog.output(logIteration)
+				eventsLog.output(logIteration, isIgnored)
 				
 				tasks = new Listr list.map((file)=>
 					title: "Executing command: #{chalk.dim(file.filePathShort)}"
@@ -195,15 +202,10 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			watcher.add(dirPath)
 			scanInitial(dirPath)
 
-			dirName = if dirPath.slice(-1)[0] is '/' then dirPath.slice(0,-1) else dirPath
-			dirName = dirName.slice(2) if dirName[0] is '.'
-			# dirName = switch dirName[0]
-			# 	when '.' then dirName.slice(2)
-			# 	when '/' then dirName.slice(1)
 			
 
-			watcher.on 'add', processFile(dirName, 'Added')
-			watcher.on 'change', processFile(dirName, 'Changed')
+			watcher.on 'add', processFile(dirPath, 'Added')
+			watcher.on 'change', processFile(dirPath, 'Changed')
 
 			console.log chalk.bgYellow.black('Watching')+' '+chalk.dim(dirPath)
 

@@ -6,7 +6,6 @@ chalk = require 'chalk'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
-eventsLog = require './eventsLog'
 
 File = (@filePath, @watchContext, @options, eventType)->
 	@filePathShort = @filePath.replace process.cwd()+'/', ''
@@ -52,10 +51,6 @@ File::getExtension = ()->
 
 
 File::process = (eventType)->
-	unless eventType is 'scan' or not eventType
-		eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(@filePathShort)
-
-	
 	if @canScanImports()
 		@lastScanned = Date.now()
 		@scanProcedure = Promise.bind(@).then(@getContents).then(@scanForImports)
