@@ -187,7 +187,7 @@ suite "SimplyWatch", ()->
 		
 
 		test "Commands will only execute once if changed multiple times within the execDelay option", ()->
-			options = globs:['test/samples/js/*'], command:'echo {{name}} >> test/temp/three'
+			options = globs:['test/samples/js/*'], command:'echo {{name}} >> test/temp/three', execDelay:5000
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ()->
@@ -396,13 +396,13 @@ suite "SimplyWatch", ()->
 
 			
 
-			test "If the final command exits with a non-zero status code the error message will be written to the terminal", ()->
+			test "If the final command exits with a non-zero status code the error message will be written to the terminal", ()-> if process.env.CI then @skip() else
 				stdout = ''
 				removeInterceptor = interceptStdout (data)-> stdout += data; return ''
 				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten.5 && exit 1', finalCommandDelay:1
 				
 				SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
-					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/ten.5', false).then ({result, resultLines})->
+					triggerFileChange('test/samples/js/mainDiff.js', 'test/temp/ten.5', false).then ({result, resultLines})->
 						removeInterceptor()
 						expect(resultLines[0]).to.equal 'Final command executed'
 						expect(stdout).to.include "Error: Command failed:"
