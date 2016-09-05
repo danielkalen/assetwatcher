@@ -2,15 +2,16 @@
 [![Build Status](https://travis-ci.org/danielkalen/simplywatch.svg?branch=master)](https://travis-ci.org/danielkalen/simplywatch)
 [![Coverage](.config/badges/coverage-node.png?raw=true)](https://github.com/danielkalen/simplyimport)
 [![Code Climate](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/badges/bff51b9d181be94abb2b/gpa.svg)](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/feed)
+
 A command line tool that monitors files under a given glob and individually  executes commands (with optional dynamic placeholders) for the changed/added files.
 
 What makes SimplyWatch different from the *few* similar packages available on NPM is:
-1. It is intergrated with [node-sass](https://www.npmjs.com/package/node-sass) and [simplyimport](https://www.npmjs.com/package/simplyimport) in which discovered files are scanned for import declarations and if SimplyWatch detects a change in any of the imported files, the provided command will be executed for the importing file. *Example: 'FileA' and 'FileB' both import 'ChildFile' - when 'ChildFile' changes the command is executed for both 'FileA' and 'FileB'. Note that the imported file doesn't have to be in the provided glob, and will be watched for changes upon discovery.*
-2. It executes the commands concurrently. A scenario in which this is useful is when multiple files import the same child file and once the child file changes the command is executed for all importing files.
-3. It provides debouncing: if a file is changed multiple times in a very short timeframe (i.e. under 2 seconds), the command will only be executed once in that time frame. *Note: The default delay is 1500ms, and can be changed by specifying a different value to [-d || -execDelay]*
-4. It stacks execution tasks in order: If a file change triggers the command to be executed for it and then changes again (possibly multiple times) while the first command is still executing then the next command[s] will wait until the previous one finishes before being executed.
-5. It can execute a final command after a given delay once SimplyWatch finishes processing a file change/addition batch. *Example: once the compile command is executed for the source files, copy them to the dist/ folder and restart the server.*
-6. It can trim the messages outputted from the commands to a certain # of characters. This is useful for example when commands encounter an error they output the entire file's content in order to highlight a line that triggered the error, which can sometimes result in extremely large console outputs.
+* It is intergrated with [node-sass](https://www.npmjs.com/package/node-sass) and [simplyimport](https://www.npmjs.com/package/simplyimport) in which discovered files are scanned for import declarations and if SimplyWatch detects a change in any of the imported files, the provided command will be executed for the importing file. *Example: 'FileA' and 'FileB' both import 'ChildFile' - when 'ChildFile' changes the command is executed for both 'FileA' and 'FileB'. Note that the imported file doesn't have to be in the provided glob, and will be watched for changes upon discovery.*
+* It executes the commands concurrently. A scenario in which this is useful is when multiple files import the same child file and once the child file changes the command is executed for all importing files.
+* It provides debouncing: if a file is changed multiple times in a very short timeframe (i.e. under 2 seconds), the command will only be executed once in that time frame. *Note: The default delay is 1500ms, and can be changed by specifying a different value to [-d || -execDelay]*
+* It stacks execution tasks in order: If a file change triggers the command to be executed for it and then changes again (possibly multiple times) while the first command is still executing then the next command[s] will wait until the previous one finishes before being executed.
+* It can execute a final command after a given delay once SimplyWatch finishes processing a file change/addition batch. *Example: once the compile command is executed for the source files, copy them to the dist/ folder and restart the server.*
+* It can trim the messages outputted from the commands to a certain # of characters. This is useful for example when commands encounter an error they output the entire file's content in order to highlight a line that triggered the error, which can sometimes result in extremely large console outputs.
 
 
 Installation:
