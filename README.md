@@ -1,5 +1,5 @@
 # SimplyWatch
-[![Build Status](https://travis-ci.org/danielkalen/simplywatch.svg?branch=master)](https://travis-ci.org/danielkalen/simplywatch)
+[![Build Status](https://travis-ci.org/danielkalen/simplywatch.svg)](https://travis-ci.org/danielkalen/simplywatch)
 [![Coverage](.config/badges/coverage-node.png?raw=true)](https://github.com/danielkalen/simplyimport)
 [![Code Climate](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/badges/bff51b9d181be94abb2b/gpa.svg)](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/feed)
 
