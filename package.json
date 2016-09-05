@@ -32,7 +32,7 @@
     "url": "https://github.com/danielkalen/simplywatch"
   },
   "license": "MIT",
-  "mocha_opts": "-u tdd -b --compilers coffee:coffee-script/register --slow 3000 --timeout 10000 -R spec",
+  "mocha_opts": "-u tdd --compilers coffee:coffee-script/register --slow 3000 --timeout 10000 -R spec",
   "scripts": {
     "watch": "nodemon -e coffee -w ./src -x 'npm run build'",
     "build": "npm run compile && npm run prependbin && npm run makeexec",
