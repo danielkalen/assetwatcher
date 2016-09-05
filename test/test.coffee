@@ -186,7 +186,7 @@ suite "SimplyWatch", ()->
 
 		
 
-		test "Commands will only execute once if changed multiple times within the execDelay option", ()->
+		test "Commands will only execute once if changed multiple times within the execDelay option", ()-> if process.env.CI then @skip() else
 			options = globs:['test/samples/js/*'], command:'echo {{name}} >> test/temp/three', execDelay:5000
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
