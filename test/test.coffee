@@ -61,6 +61,9 @@ triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=6
 
 
 
+process.on 'unhandledRejection', (err)-> 
+	throw err
+	process.exit(1)
 
 
 
@@ -77,8 +80,9 @@ triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=6
 
 
 suite "SimplyWatch", ()->
-	suiteSetup ()-> fs.ensureDirAsync('test/temp').then ()-> testWatcher = chokidar.watch 'test/temp/**', 'cwd':process.cwd()
 	suiteTeardown (done)-> fs.remove 'test/temp', done
+	suiteSetup ()-> fs.ensureDirAsync('test/temp').then ()->
+		testWatcher = chokidar.watch 'test/temp/**', 'cwd':process.cwd(), 'awaitWriteFinish': {'stabilityThreshold': if process.env.CI then 1000 else 1}
 
 
 
@@ -399,7 +403,7 @@ suite "SimplyWatch", ()->
 								
 								watcher.close()
 								done()
-						, 400
+						, 200
 			
 
 			
