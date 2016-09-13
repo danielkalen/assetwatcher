@@ -113,7 +113,7 @@ File::executeCommand = (command)-> new Promise (resolve)=> #if not @canExecuteCo
 
 
 File::canExecuteCommand = (invokeTime)->
-	if @lastProcessed?
+	if @lastProcessed
 		return invokeTime - @lastProcessed > @options.execDelay
 	else
 		return true

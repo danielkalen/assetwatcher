@@ -148,7 +148,7 @@ File.prototype.executeCommand = function(command) {
 };
 
 File.prototype.canExecuteCommand = function(invokeTime) {
-  if (this.lastProcessed != null) {
+  if (this.lastProcessed) {
     return invokeTime - this.lastProcessed > this.options.execDelay;
   } else {
     return true;

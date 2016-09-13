@@ -172,7 +172,7 @@ module.exports = function(passedOptions) {
                           _this.executionLogs.log[file.filePathShort] = stdout;
                         }
                         if (stderr && !err) {
-                          _this.executionLogs.log[file.filePathShort] = err;
+                          _this.executionLogs.log[file.filePathShort] = stderr;
                         } else if (err) {
                           _this.executionLogs.error[file.filePathShort] = stderr || err;
                         }

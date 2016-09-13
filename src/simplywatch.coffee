@@ -112,7 +112,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 							if stdout then @executionLogs.log[file.filePathShort] = stdout
 
 							if stderr and not err
-								@executionLogs.log[file.filePathShort] = err
+								@executionLogs.log[file.filePathShort] = stderr
 							else if err
 								@executionLogs.error[file.filePathShort] = stderr or err
 
