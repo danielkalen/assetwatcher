@@ -26,8 +26,8 @@ clearRequireCache = (dir)->
 
 
 
-triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=3000)-> new Promise (resolve)->
-	emptyResults = 'result':'', 'resultLines':[]
+triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=6000)-> new Promise (resolve)->
+	emptyResults = 'result':'', 'resultLines':['null']
 	
 	fs.readFileAsync(filePath, fsOpts).then (contents)->
 		removeInterceptor = interceptStdout(()-> '') if shouldIntercept
@@ -43,9 +43,13 @@ triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=3
 					removeInterceptor() if shouldIntercept
 					testWatcher.unwatch(resultPath)
 					
-					fs.readFileAsync(resultPath, fsOpts).then (result)->
-						resultLines = result.split('\n').filter (validLine)-> validLine
-						resolve {result, resultLines}
+					fs.readFileAsync(resultPath, fsOpts)
+						.then (result)->
+							resultLines = result.split('\n').filter (validLine)-> validLine
+							resolve {result, resultLines}
+						
+						.catch ()->
+							resolve(emptyResults)
 				
 
 				testWatcher.on 'add', onFsChange
@@ -191,7 +195,7 @@ suite "SimplyWatch", ()->
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ()->
-					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', 500).then ()->
+					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', false, 500).then ()->
 						fs.readFileAsync('test/temp/three', encoding:'utf8').then (result)->
 							expect(result).to.equal "mainCopy\n"
 
