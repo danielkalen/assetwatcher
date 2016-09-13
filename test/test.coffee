@@ -26,7 +26,7 @@ clearRequireCache = (dir)->
 
 
 
-triggerFileChange = (filePath, resultPath, shouldIntercept=true)-> new Promise (resolve)->
+triggerFileChange = (filePath, resultPath, shouldIntercept=true, timeoutLength=3000)-> new Promise (resolve)->
 	emptyResults = 'result':'', 'resultLines':[]
 	
 	fs.readFileAsync(filePath, fsOpts).then (contents)->
@@ -53,7 +53,7 @@ triggerFileChange = (filePath, resultPath, shouldIntercept=true)-> new Promise (
 				testWatcher.add(resultPath)
 				setTimeout ()->
 					resolve(emptyResults)
-				, 3000
+				, timeoutLength
 
 
 
@@ -191,12 +191,16 @@ suite "SimplyWatch", ()->
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ()->
-					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ({result, resultLines})->
-						expect(result).to.equal "mainCopy\n"
+					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', 500).then ()->
+						fs.readFileAsync('test/temp/three', encoding:'utf8').then (result)->
+							expect(result).to.equal "mainCopy\n"
 
-						watcher.close()
-						done()
-			
+							fs.readFileAsync('test/temp/three.2', encoding:'utf8').catch (err)->
+								expect(err).to.be.an.error
+
+								watcher.close()
+								done()
+				
 
 			
 
