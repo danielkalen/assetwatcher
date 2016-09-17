@@ -7,23 +7,24 @@ SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
 
-File = (@filePath, @watchContext, @options, eventType)->
+File = (@filePath, @watchContext, @options)->
 	@filePathShort = @filePath.replace process.cwd()+'/', ''
 	@fileDirShort = Path.dirname(@filePathShort)
 	@fileDir = Path.dirname(@filePath)
 	@fileExt = @getExtension()
+	@filePathNoExt = @fileDir+'/'+Path.basename(@filePath, @fileExt)
 	@relDir = Path.dirname(@watchContext)
 	@relDir = if @relDir[0] is '.' then @relDir.slice(1) else @relDir
 	@relDir = @fileDirShort.replace @relDir, ''
 	@pathParams = Path.parse @filePath
 	@pathParams.reldir = @relDir.slice(1)
-	@deps = []
+	@deps = badFilesDeps[@filePathNoExt] or []
 	@imports = []
 	@lastProcessed = null
 	@lastScanned = null
 	@execCount = 1
 
-	return @process(eventType)
+	return @process()
 
 
 
@@ -34,23 +35,23 @@ File::getExtension = ()->
 	if extension
 		return extension
 	else
-		pathsToTry = ["#{@filePath}.js", "#{@filePath}.coffee", "#{@filePath}.sass", "#{@filePath}.scss"]
-
-		for path in pathsToTry then try
-			fs.statSync(path) # Will throw an error (an not execute the code below) if it doesn't exist
-			extension = Path.extname(path)
-			break
+		try
+			thisFileName = Path.basename(@filePath)
+			files = fs.readdirSync(@fileDir).forEach (filePath)->
+				fileExt = Path.extname(filePath)
+				fileName = Path.basename(filePath, fileExt)
+				extension = fileExt if fileName is thisFileName
 
 		if extension
 			@filePath += extension
 			@filePathShort += extension
 			fileInstances[@filePath] = @
-		
+
 		return extension or ''
 
 
 
-File::process = (eventType)->
+File::process = ()->
 	if @canScanImports()
 		@lastScanned = Date.now()
 		@scanProcedure = Promise.bind(@).then(@getContents).then(@scanForImports)
@@ -77,11 +78,17 @@ File::scanForImports = ()-> new Promise (resolve)=>
 	SimplyImport.scanImports(@content or '', true, true)
 		.forEach (childPath)=>
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
-			childFile = getFile(childPath, @watchContext, @options, 'scan')
+			childFile = getFile(childPath, @watchContext, @options)
+
+			if not childFile.fileExt # Indicates provided childPath didn't have a file extension and has yet to be discovered. Delete from cache so that next time a discovery will be re-attempted
+				badFilesDeps[childPath] ?= []
+				badFilesDeps[childPath].push @
+				delete fileInstances[childPath]
 
 			watcher.add(childFile.filePath)
 			@imports.push(childFile)
 			childFile.deps.push(@) unless childFile.deps.includes(@)
+
 
 	if @imports.length is 0
 		resolve()
@@ -120,7 +127,7 @@ File::canExecuteCommand = (invokeTime)->
 
 
 File::canScanImports = ()->
-	if @lastScanned?
+	if @lastScanned
 		return Date.now() - @lastScanned > 150
 	else
 		return true
@@ -135,5 +142,7 @@ File::canScanImports = ()->
 
 
 fileInstances = {}
-module.exports = getFile = (filePath, watchContext, options, eventType)->
-	fileInstances[filePath]?.process(eventType) or fileInstances[filePath] = new File(filePath, watchContext, options, eventType)
+badFilesDeps = {} # For tracking deps of files that were provided without an extension and didn't exist in the referenced directory
+
+module.exports = getFile = (filePath, watchContext, options)->
+	fileInstances[filePath]?.process() or fileInstances[filePath] = new File(filePath, watchContext, options)

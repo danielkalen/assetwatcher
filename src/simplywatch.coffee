@@ -40,7 +40,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		Glob(globToScan, {nodir:true, dot:true}).then (files)->
 			for filePath in files
 				filePath = absPath(filePath)
-				getFile(filePath, globToScan, options, 'scan') unless filePath.includes('.git')
+				getFile(filePath, globToScan, options) unless filePath.includes('.git')
 			return
 
 
@@ -63,7 +63,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		@lastTasklist = Promise.resolve()
 		
 		@add = (filePath, watchContext, eventType)->
-			file = getFile(filePath, watchContext, options, eventType)
+			file = getFile(filePath, watchContext, options)
 
 			if eventType and not isIgnored(file.filePath)
 				eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.filePathShort)

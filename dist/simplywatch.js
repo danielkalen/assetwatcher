@@ -69,7 +69,7 @@ module.exports = function(passedOptions) {
           filePath = files[i];
           filePath = absPath(filePath);
           if (!filePath.includes('.git')) {
-            getFile(filePath, globToScan, options, 'scan');
+            getFile(filePath, globToScan, options);
           }
         }
       });
@@ -98,7 +98,7 @@ module.exports = function(passedOptions) {
       this.lastTasklist = Promise.resolve();
       this.add = function(filePath, watchContext, eventType) {
         var file;
-        file = getFile(filePath, watchContext, options, eventType);
+        file = getFile(filePath, watchContext, options);
         if (eventType && !isIgnored(file.filePath)) {
           eventsLog.add(chalk.bgGreen.bgGreen.black(eventType) + ' ' + chalk.dim(file.filePathShort));
         }
