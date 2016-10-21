@@ -1,4 +1,5 @@
 #!/usr/bin/env coffee
+require 'nodejs-dashboard' if process.env.DEBUG
 chalk = require 'chalk'
 yargs = require 'yargs'
 yargs
