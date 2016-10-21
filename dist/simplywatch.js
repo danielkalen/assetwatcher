@@ -97,10 +97,17 @@ module.exports = function(passedOptions) {
       };
       this.lastTasklist = Promise.resolve();
       this.add = function(filePath, watchContext, eventType) {
-        var file;
+        var file, logEvent, wasNotLogged;
         file = getFile(filePath, watchContext, options);
-        if (eventType && !isIgnored(file.filePath)) {
-          eventsLog.add(chalk.bgGreen.bgGreen.black(eventType) + ' ' + chalk.dim(file.filePathShort));
+        logEvent = function() {
+          return eventsLog.add(chalk.bgGreen.bgGreen.black(eventType) + ' ' + chalk.dim(file.filePathShort));
+        };
+        if (eventType) {
+          if (!isIgnored(file.filePath)) {
+            logEvent();
+          } else {
+            wasNotLogged = true;
+          }
         }
         return file.scanProcedure.then((function(_this) {
           return function() {
@@ -117,6 +124,9 @@ module.exports = function(passedOptions) {
                 return _this.beginProcess();
               }
             } else {
+              if (wasNotLogged) {
+                logEvent();
+              }
               ref = file.deps;
               results = [];
               for (i = 0, len = ref.length; i < len; i++) {

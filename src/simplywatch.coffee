@@ -64,9 +64,14 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		
 		@add = (filePath, watchContext, eventType)->
 			file = getFile(filePath, watchContext, options)
-
-			if eventType and not isIgnored(file.filePath)
+			logEvent = ()->
 				eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.filePathShort)
+
+			if eventType
+				if not isIgnored(file.filePath)
+					logEvent()
+				else
+					wasNotLogged = true
 			
 			file.scanProcedure.then ()=>
 				fileDeps = file.deps
@@ -78,6 +83,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 						@list[file.filePath] = file
 						@beginProcess()
 				else
+					logEvent() if wasNotLogged
 					@add(depFile.filePath, watchContext) for depFile in file.deps
 
 

@@ -70,6 +70,7 @@
     "istanbul": "^0.4.5",
     "lcov-parse": "0.0.10",
     "mocha": "^3.0.2",
+    "nodejs-dashboard": "^0.1.1",
     "nodemon": "^1.8.1",
     "request": "^2.74.0",
     "svg2png": "^3.0.1"
