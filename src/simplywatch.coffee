@@ -51,7 +51,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		return false
 
 	isValidOutput = (output)->
-		output and output isnt 'null' and output?.length >= 1
+		output and output isnt 'null' and ( (typeof output is 'string' and output.length >= 1) or (typeof output is 'object') )
 
 
 
@@ -118,14 +118,14 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 					
 					task: ()=> new Promise (resolve, reject)=>				
 						file.executeCommand(options.command).then ({err, stdout, stderr})=>
-							if isValidInput(stdout) then @executionLogs.log[file.filePathShort] = stdout
+							if isValidOutput(stdout) then @executionLogs.log[file.filePathShort] = stdout
 
-							if isValidInput(stderr) and not isValidInput(err)
+							if isValidOutput(stderr) and not isValidOutput(err)
 								@executionLogs.log[file.filePathShort] = stderr
-							else if isValidInput(err)
+							else if isValidOutput(err)
 								@executionLogs.error[file.filePathShort] = stderr or err
 
-							if isValidInput(err) then reject() else resolve()
+							if isValidOutput(err) then reject() else resolve()
 
 				), 'concurrent':true
 				

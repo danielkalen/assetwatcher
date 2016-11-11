@@ -86,7 +86,7 @@ module.exports = function(passedOptions) {
       return false;
     };
     isValidOutput = function(output) {
-      return output && output !== 'null' && (output != null ? output.length : void 0) >= 1;
+      return output && output !== 'null' && ((typeof output === 'string' && output.length >= 1) || (typeof output === 'object'));
     };
     queue = new function() {
       this.list = {};
@@ -181,15 +181,15 @@ module.exports = function(passedOptions) {
                       return file.executeCommand(options.command).then(function(arg) {
                         var err, stderr, stdout;
                         err = arg.err, stdout = arg.stdout, stderr = arg.stderr;
-                        if (isValidInput(stdout)) {
+                        if (isValidOutput(stdout)) {
                           _this.executionLogs.log[file.filePathShort] = stdout;
                         }
-                        if (isValidInput(stderr) && !isValidInput(err)) {
+                        if (isValidOutput(stderr) && !isValidOutput(err)) {
                           _this.executionLogs.log[file.filePathShort] = stderr;
-                        } else if (isValidInput(err)) {
+                        } else if (isValidOutput(err)) {
                           _this.executionLogs.error[file.filePathShort] = stderr || err;
                         }
-                        if (isValidInput(err)) {
+                        if (isValidOutput(err)) {
                           return reject();
                         } else {
                           return resolve();
