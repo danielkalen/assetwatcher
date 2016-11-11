@@ -35,7 +35,7 @@ defaultOptions = require('./defaultOptions');
 
 module.exports = function(passedOptions) {
   return new Promise(function(resolve) {
-    var formatOutputMessage, isIgnored, options, processFile, queue, scanInitial;
+    var formatOutputMessage, isIgnored, isValidOutput, options, processFile, queue, scanInitial;
     options = extend({}, defaultOptions, passedOptions);
     if (typeof options.globs === 'string') {
       options.globs = [options.globs];
@@ -84,6 +84,9 @@ module.exports = function(passedOptions) {
         }
       }
       return false;
+    };
+    isValidOutput = function(output) {
+      return output && output !== 'null' && (output != null ? output.length : void 0) >= 1;
     };
     queue = new function() {
       this.list = {};
@@ -178,15 +181,15 @@ module.exports = function(passedOptions) {
                       return file.executeCommand(options.command).then(function(arg) {
                         var err, stderr, stdout;
                         err = arg.err, stdout = arg.stdout, stderr = arg.stderr;
-                        if (stdout) {
+                        if (isValidInput(stdout)) {
                           _this.executionLogs.log[file.filePathShort] = stdout;
                         }
-                        if (stderr && !err) {
+                        if (isValidInput(stderr) && !isValidInput(err)) {
                           _this.executionLogs.log[file.filePathShort] = stderr;
-                        } else if (err) {
+                        } else if (isValidInput(err)) {
                           _this.executionLogs.error[file.filePathShort] = stderr || err;
                         }
-                        if (err) {
+                        if (isValidInput(err)) {
                           return reject();
                         } else {
                           return resolve();
