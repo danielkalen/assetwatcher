@@ -14,12 +14,14 @@ module.exports = new function() {
   };
   this.output = function(targetIteration) {
     var event, i, len, ref;
-    ref = list[targetIteration];
-    for (i = 0, len = ref.length; i < len; i++) {
-      event = ref[i];
-      console.log(event);
+    if (list[targetIteration]) {
+      ref = list[targetIteration];
+      for (i = 0, len = ref.length; i < len; i++) {
+        event = ref[i];
+        console.log(event);
+      }
+      return delete list[targetIteration];
     }
-    return delete list[targetIteration];
   };
   return this;
 };
