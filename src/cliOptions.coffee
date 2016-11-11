@@ -36,6 +36,16 @@ module.exports =
 		describe: 'Suppress any output from the executing command (including errors)'
 		type: 'boolean'
 		default: false
+	'b': 
+		alias: 'background'
+		describe: 'Run SimplyWatch as a background daemon'
+		type: 'boolean'
+		default: false
+	'l': 
+		alias: 'log'
+		describe: 'Path of the target log file when running in background mode'
+		type: 'string'
+		default: './simplywatch.log'
 	# 'p': 
 	# 	alias: 'processImports'
 	# 	describe: 'Execute the command for files that are imported by other files'

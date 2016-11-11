@@ -1,5 +1,6 @@
 #!/usr/bin/env coffee
 require 'nodejs-dashboard' if process.env.DEBUG
+fs = require 'fs'
 chalk = require 'chalk'
 yargs = require 'yargs'
 yargs
@@ -24,11 +25,17 @@ options =
 
 
 
-if args.h or args.help
+if args.help
 	process.stdout.write(yargs.help());
 	process.exit(0)
 else
 	require('./simplywatch')(options)
 
-
+	if args.background
+		if process.env.__daemon
+			console.log chalk.bgGreen.black.bold('Running as daemon'), "PID #{process.PID}"
+		else	
+			fs.open args.log, 'w', (err, outputFile)->
+				throw err if err
+				require('daemon')({stdout:outputFile, stderr:outputFile})
 
