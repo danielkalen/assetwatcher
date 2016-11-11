@@ -42,7 +42,7 @@ simplywatch -g <glob> -x <command to execute> [options]
 -b, --background    Run SimplyWatch as a background daemon
 -l, --log           Path of the target log file when running in background mode
 -h                  Show help
---version           Show version number                                   
+--version           Show version number                                  
 ```
 
 **Execution Command Placeholders**
