@@ -39,8 +39,10 @@ simplywatch -g <glob> -x <command to execute> [options]
 -D, --finallyDelay  The amount of milliseconds to wait before executing the "finally" command
 -t, --trim          Trims the output of the command executions to only show the first X characters of the output
 -s, --silent        Suppress any output from the executing command (including errors)
--h, --help          Show help
---version           Show version number                                     
+-b, --background    Run SimplyWatch as a background daemon
+-l, --log           Path of the target log file when running in background mode
+-h                  Show help
+--version           Show version number                                   
 ```
 
 **Execution Command Placeholders**

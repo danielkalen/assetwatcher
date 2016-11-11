@@ -22,9 +22,9 @@
     "each",
     "watch"
   ],
-  "main": "dist/simplywatch.js",
+  "main": "index.js",
   "bin": {
-    "simplywatch": "./dist/bin"
+    "simplywatch": "./bin"
   },
   "author": "danielkalen",
   "repository": {
@@ -34,16 +34,10 @@
   "license": "MIT",
   "mocha_opts": "-u tdd --compilers coffee:coffee-script/register --slow 3000 --timeout 10000 -R spec",
   "scripts": {
-    "watch": "nodemon -e coffee -w ./src -x 'npm run build'",
-    "build": "npm run compile && npm run prependbin && npm run makeexec",
-    "compile": "npm run compile:module && npm run compile:bin",
-    "compile:module": "foreach -g 'src/*' -x 'cat {{path}} | coffee -c -s -b > dist/{{name}}.js'",
-    "compile:bin": "coffee -o ./dist -c -b src/cli.coffee",
-    "prependbin": "echo '#!/usr/bin/env node' | cat - dist/cli.js > dist/bin && rm -rf dist/cli.js",
-    "makeexec": "chmod +x dist/bin && chmod +x src/cli.coffee",
+    "makeexec": "chmod +x ./bin",
     "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
     "coverage:badge": "coffee .config/badge-gen.coffee",
-    "test": "fromSrc=true mocha $npm_package_mocha_opts"
+    "test": "mocha $npm_package_mocha_opts"
   },
   "dependencies": {
     "@danielkalen/listr": "^0.5.0",
@@ -51,7 +45,7 @@
     "bluebird": "^3.4.3",
     "chalk": "^1.1.3",
     "chokidar": "^1.6.0",
-    "daemon": "^1.1.0",
+    "daemon-plus": "^1.1.1",
     "extend": "^3.0.0",
     "glob": "^7.0.3",
     "micromatch": "^2.3.11",

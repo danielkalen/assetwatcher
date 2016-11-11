@@ -11,18 +11,15 @@ testWatcher = null
 
 SimplyWatch = (options)->
 	options.execDelay = 1 unless options.execDelay
-	if process.env.fromSrc
-		clearRequireCache('src')
-		require('../src/simplywatch.coffee')(options)
-	else
-		clearRequireCache('dist')
-		require('../dist/simplywatch.js')(options)
+	
+	clearRequireCache()
+	require('../lib/simplywatch')(options)
 
 
-clearRequireCache = (dir)->
-	files = fs.readdirSync(dir)
+clearRequireCache = ()->
+	files = fs.readdirSync('lib')
 	for file in files
-		delete require.cache["#{process.cwd()}/#{dir}/#{file}"]
+		delete require.cache["#{process.cwd()}/lib/#{file}"]
 
 
 

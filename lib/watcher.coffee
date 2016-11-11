@@ -5,7 +5,7 @@ watchedFiles = []
 watcher = chokidar.watch [],
 	'cwd':process.cwd()
 	'ignoreInitial': true
-	'ignored': /(?:\.git|node_modules)/
+	'ignored': /(?:\.git|node_modules|.+\.log)/
 
 watcher.ready = new Promise (resolve)->
 	watcher.on 'ready', resolve
