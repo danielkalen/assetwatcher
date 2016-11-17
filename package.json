@@ -49,7 +49,7 @@
     "extend": "^3.0.0",
     "glob": "^7.0.3",
     "micromatch": "^2.3.11",
-    "simplyimport": "^2.1.6",
+    "simplyimport": "^2.3.0",
     "window-size": "^0.2.0",
     "yargs": "^3.29.0"
   },
