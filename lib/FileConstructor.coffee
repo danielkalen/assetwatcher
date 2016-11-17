@@ -75,7 +75,7 @@ File::getContents = ()-> new Promise (resolve)=>
 File::scanForImports = ()-> new Promise (resolve)=>
 	@imports.length = 0
 	
-	SimplyImport.scanImports(@content or '', true, true)
+	SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir})
 		.forEach (childPath)=>
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
 			childFile = getFile(childPath, @watchContext, @options)
