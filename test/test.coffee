@@ -138,7 +138,9 @@ suite "SimplyWatch", ()->
 			
 			SimplyWatch(options).then (watcher)-> new Promise (done)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/sass/nested/one.sass', 'test/temp/one').then ({result, resultLines})->
-					expect(resultLines[0]).to.equal "main.sass"
+					expect(resultLines.length).to.equal 2
+					expect(result).to.include "main.sass"
+					expect(result).to.include "main.copy.sass"
 
 					watcher.close()
 					done()
