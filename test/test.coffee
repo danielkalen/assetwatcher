@@ -78,7 +78,7 @@ process.on 'unhandledRejection', (err)->
 
 suite "SimplyWatch", ()->
 	suiteTeardown (done)-> fs.remove 'test/temp', done
-	suiteSetup ()-> fs.ensureDirAsync('test/temp').then ()->
+	suiteSetup ()-> fs.emptyDirAsync('test/temp').then ()->
 		testWatcher = chokidar.watch 'test/temp/**', 'cwd':process.cwd(), 'awaitWriteFinish': {'stabilityThreshold': if process.env.CI then 1000 else 1}
 
 
