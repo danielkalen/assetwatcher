@@ -69,8 +69,14 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		
 		@add = (filePath, watchContext, eventType)->
 			file = getFile(filePath, watchContext, options)
+			
 			logEvent = ()->
-				eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.filePathShort)
+				notes = if not file.deps.length then '' else do ()->
+					depNames = file.deps.map((file)->file.pathParams.base).join(', ')
+					return " [imported by #{depNames}]"
+
+				eventsLog.add chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.filePathShort+notes)
+
 
 			if eventType
 				if not isIgnored(file.filePath)
