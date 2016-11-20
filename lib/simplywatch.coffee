@@ -27,6 +27,8 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 	if options.globs.length is 0 then throw new Error "No globs were provided"
 	if not options.command then throw new Error "Execution command not provided"
 
+	if options.ignoreGlobs?.length
+		watcher.options.ignored.push(ignoreGlob) for ignoreGlob in options.ignoreGlobs
 
 	formatOutputMessage = (message)-> if options.trim then message.slice(0, options.trim) else message
 
