@@ -1,4 +1,4 @@
-chokidar = require 'chokidar'
+chokidar = require '@danielkalen/chokidar'
 chalk = require 'chalk'
 
 watchedFiles = []
