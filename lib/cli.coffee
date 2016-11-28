@@ -1,4 +1,6 @@
+process.title = 'simplywatch'
 require 'nodejs-dashboard' if process.env.DEBUG
+
 fs = require 'fs'
 chalk = require 'chalk'
 yargs = require 'yargs'
