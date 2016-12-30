@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 Promise.config cancellation:true
 Glob = Promise.promisify require 'glob'
 Path = require 'path'
+Console = require('console').Console
 exec = require('child_process').exec
 absPath = require 'abs'
 globMatch = require 'micromatch'
@@ -20,9 +21,9 @@ defaultOptions = require './defaultOptions'
 
 
 
-
 module.exports = (passedOptions)-> new Promise (resolve)->
 	options = extend({}, defaultOptions, passedOptions)
+	console = new Console(options.stdout, options.stderr)
 	if typeof options.globs is 'string' then options.globs = [options.globs]
 	if options.globs.length is 0 then throw new Error "No globs were provided"
 	if not options.command then throw new Error "Execution command not provided"
@@ -117,7 +118,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			invokeTime = Date.now()
 			
 			@lastTasklist = @lastTasklist.then ()=> new Promise (resolve)=>
-				eventsLog.output(logIteration, isIgnored)
+				eventsLog.output(logIteration, console)
 				
 				tasks = new Listr list.map((file)=>
 					title: "Executing command: #{chalk.dim(file.filePathShort)}"
@@ -173,26 +174,26 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			logsCount = Object.keys(@executionLogs.log).length + Object.keys(@executionLogs.error).length
 		
 			if logsCount is 0 or options.silent
-				process.stdout.write '\n'
+				options.stdout.write '\n'
 			else
 				lineCount = Math.floor require('window-size').width * 0.7
 				divider = '-'.repeat(lineCount)
 				
-				process.stdout.write '\n\n'
-				process.stdout.write divider.slice(0,5)+'COMMAND OUTPUT'+divider.slice(18)
+				options.stdout.write '\n\n'
+				options.stdout.write divider.slice(0,5)+'COMMAND OUTPUT'+divider.slice(18)
 				
 				for file,message of @executionLogs.log
-					process.stdout.write '\n'+chalk.bgWhite.black.bold("Output")+' '+chalk.dim(file)
-					process.stdout.write '\n'+formatOutputMessage(message)+'\n'
+					options.stdout.write '\n'+chalk.bgWhite.black.bold("Output")+' '+chalk.dim(file)
+					options.stdout.write '\n'+formatOutputMessage(message)+'\n'
 					delete @executionLogs.log[file]
 				
 				for file,message of @executionLogs.error
-					process.stdout.write '\n'+chalk.bgRed.white.bold("Error")+' '+chalk.dim(file)
-					process.stdout.write '\n'+formatOutputMessage(message)+'\n'
+					options.stdout.write '\n'+chalk.bgRed.white.bold("Error")+' '+chalk.dim(file)
+					options.stdout.write '\n'+formatOutputMessage(message)+'\n'
 					delete @executionLogs.error[file]
 				
-				process.stdout.write divider
-				process.stdout.write '\n\n\n'
+				options.stdout.write divider
+				options.stdout.write '\n\n\n'
 
 		
 		return @

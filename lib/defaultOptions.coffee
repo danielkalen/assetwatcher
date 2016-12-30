@@ -8,3 +8,5 @@ module.exports =
 	'finalCommandDelay': 500
 	'trim': null
 	'silent': false
+	'stdout': process.stdout
+	'stderr': process.stderr

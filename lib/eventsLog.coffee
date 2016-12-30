@@ -6,7 +6,7 @@ module.exports = new ()->
 		list[@iteration] ?= []
 		list[@iteration].push(event)
 
-	@output = (targetIteration)-> if list[targetIteration]
+	@output = (targetIteration, console)-> if list[targetIteration]
 		for event in list[targetIteration]
 			console.log event
 
