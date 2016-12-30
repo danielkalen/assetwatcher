@@ -72,11 +72,11 @@ File::getContents = ()-> new Promise (resolve)=>
 
 
 
-File::scanForImports = ()-> new Promise (resolve)=>
+File::scanForImports = ()-> #new Promise (resolve)=>
 	@imports.length = 0
 	
-	SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir})
-		.forEach (childPath)=>
+	SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
+		imports.forEach (childPath)=>
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
 			childFile = getFile(childPath, @watchContext, @options)
 
@@ -90,12 +90,8 @@ File::scanForImports = ()-> new Promise (resolve)=>
 			childFile.deps.push(@) unless childFile.deps.includes(@)
 
 
-	if @imports.length is 0
-		resolve()
-	else
-		Promise
-			.map @imports, (childFile)-> childFile.scanProcedure
-			.then ()-> resolve()
+		if @imports.length
+			Promise.map @imports, (childFile)-> childFile.scanProcedure
 
 
 
