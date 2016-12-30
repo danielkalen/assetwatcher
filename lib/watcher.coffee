@@ -10,7 +10,7 @@ watcher = chokidar.watch [],
 
 watcher.ready = new Promise (resolve)->
 	watcher.on 'ready', resolve
-	setTimeout resolve, 200
+	setTimeout resolve, 1000
 
 
 watcherAdd = watcher.add.bind(watcher)
