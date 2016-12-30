@@ -1,6 +1,6 @@
 # SimplyWatch
 [![Build Status](https://travis-ci.org/danielkalen/simplywatch.svg)](https://travis-ci.org/danielkalen/simplywatch)
-[![Coverage](.config/badges/coverage-node.png?raw=true)](https://github.com/danielkalen/simplyimport)
+[![Coverage](.config/badges/coverage-node.png?raw=true)](https://github.com/danielkalen/simplywatch)
 [![Code Climate](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/badges/bff51b9d181be94abb2b/gpa.svg)](https://codeclimate.com/repos/57cca4d39c1556768c003c7f/feed)
 
 A command line tool that monitors files under a given glob and individually  executes commands (with optional dynamic placeholders) for the changed/added files.
