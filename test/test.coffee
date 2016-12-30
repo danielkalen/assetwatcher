@@ -352,6 +352,24 @@ suite "SimplyWatch", ()->
 						expect(stderr).to.include "Error: Command failed:"
 
 						watcher.close()
+			
+
+			
+
+			test "If a command exists with a non-zero status the final command execution will be canceled", ()-> if process.env.CI then @skip() else
+				options = globs:['test/samples/js/*'], command:'echo {{base}} > test/temp/ten.5.5 && exit 2', finalCommand:'echo "Final command executed"', finalCommandDelay:1
+				stdout = ''
+				customStdout.on 'data', (chunk)-> stdout+=chunk
+				
+				SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
+					triggerFileChange('test/samples/js/mainDiff.js', 'test/temp/ten.5.5').then ({result, resultLines})->
+						expect(result).to.include "mainDiff.js"
+						expect(stdout).to.include "Error: Command failed:"
+						expect(stdout).to.include 'NOT'
+						expect(stdout).to.include 'Executing Final Command'
+						expect(stdout).to.include '(because some tasks failed)'
+
+						watcher.close()
 
 
 

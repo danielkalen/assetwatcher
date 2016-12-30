@@ -119,6 +119,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			
 			@lastTasklist = @lastTasklist.then ()=> new Promise (resolve)=>
 				eventsLog.output(logIteration, console)
+				hasFailedTasks = false
 				
 				tasks = new Listr list.map((file)=>
 					title: "Executing command: #{chalk.dim(file.filePathShort)}"
@@ -134,27 +135,29 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 							else if isValidOutput(err)
 								@executionLogs.error[file.filePathShort] = stderr or err
 
-							if isValidOutput(err) then reject() else resolve()
+							if isValidOutput(err) then reject(hasFailedTasks=true) else resolve()
 
 				), 'concurrent':true
 				
 				tasks.run().then ()=>
 					@outputLogs()
 					resolve()
+					@processFinalCommand(hasFailedTasks)
 
-			@processFinalCommand()
 				
 
 
 
 
-		@processFinalCommand = ()-> if options.finalCommand
+		@processFinalCommand = (hasFailedTasks)-> if options.finalCommand
 			@timeout.final.cancel() if @timeout.final
-
-			@timeout.final = @lastTasklist.then ()=>
-				setTimeout ()=>
-					@finalCommand()
-				, options.finalCommandDelay
+			if hasFailedTasks
+				console.log "#{chalk.bgRed.bold('NOT')} #{chalk.bgBlue.bold('Executing Final Command')} #{chalk.dim('(because some tasks failed)')}"
+			else
+				@timeout.final = @lastTasklist.then ()=>
+					setTimeout ()=>
+						@finalCommand()
+					, options.finalCommandDelay
 
 
 
