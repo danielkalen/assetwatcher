@@ -337,7 +337,7 @@ suite "SimplyWatch", ()->
 				
 				SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
 					triggerFileChange('test/samples/js/mainCopy.js').then ()->
-						Promise.delay(200).then ()->
+						Promise.delay(100).then ()->
 							triggerFileChange('test/samples/js/mainCopy2.js', 'test/temp/ten').then ({result, resultLines})->
 								expect(resultLines.length).to.equal 1
 								expect(resultLines[0]).to.equal 'Final command executed'
