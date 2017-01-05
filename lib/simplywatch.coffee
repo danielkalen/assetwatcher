@@ -14,6 +14,8 @@ watcher = require './watcher'
 getFile = require './FileConstructor'
 eventsLog = require './eventsLog'
 defaultOptions = require './defaultOptions'
+debug = require './debugLog'
+
 
 
 
@@ -42,6 +44,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 	scanInitial = (globToScan)->
 		Glob(globToScan, {nodir:true, dot:true}).then (files)->
 			for filePath in files
+				debug.fsInit(filePath)
 				filePath = absPath(filePath)
 				getFile(filePath, globToScan, options) unless filePath.includes('.git')
 			return
@@ -49,7 +52,9 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 	isIgnored = (path)->
 		for glob in options.ignoreGlobs
-			return true if globMatch.contains(path, glob)
+			if globMatch.contains(path, glob)
+				debug.ignored(path)
+				return true
 		
 		return false
 
@@ -225,6 +230,11 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 			
 
+			watcher.on 'ready', 	(file)-> debug.watch "WATCHER Ready"
+			watcher.on 'add', 		(file)-> debug.watch "ADD #{file}"
+			watcher.on 'change', 	(file)-> debug.watch "CHANGE #{file}"
+			watcher.on 'unlink', 	(file)-> debug.watch "DELETE #{file}"
+			watcher.on 'error', 	(file)-> debug.watch "ERROR #{file}"
 			watcher.on 'add', processFile(dirPath, 'Added')
 			watcher.on 'change', processFile(dirPath, 'Changed')
 

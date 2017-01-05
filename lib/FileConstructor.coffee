@@ -6,6 +6,7 @@ chalk = require 'chalk'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
+debug = require './debugLog'
 
 File = (@filePath, @watchContext, @options)->
 	@filePathShort = @filePath.replace process.cwd()+'/', ''
@@ -24,6 +25,7 @@ File = (@filePath, @watchContext, @options)->
 	@lastScanned = null
 	@execCount = 1
 
+	debug.file "New File object for #{chalk.dim @filePathShort}"
 	return @process()
 
 
@@ -75,8 +77,10 @@ File::getContents = ()-> new Promise (resolve)=>
 File::scanForImports = ()-> #new Promise (resolve)=>
 	@imports.length = 0
 	
+	debug.imports "Scanning #{@filePathShort}"
 	SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
+			debug.imports "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
 			childFile = getFile(childPath, @watchContext, @options)
 
@@ -92,6 +96,8 @@ File::scanForImports = ()-> #new Promise (resolve)=>
 
 		if @imports.length
 			Promise.map @imports, (childFile)-> childFile.scanProcedure
+		else
+			debug.imports "0 imports found in #{chalk.dim @filePathShort}"
 
 
 
