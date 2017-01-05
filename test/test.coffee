@@ -33,19 +33,22 @@ clearRequireCache = ()->
 
 triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 	emptyResults = 'result':'', 'resultLines':['null']
+	awaitWatcher = if resultPath then testWatcher.ready else Promise.resolve()
+	READ_DELAY = if process.platform is 'darwin' then 0 else 200
 	
-	fs.readFileAsync(filePath, fsOpts).then (contents)->
-		fs.writeFileAsync(filePath, contents).then ()->
+	fs.readFileAsync(filePath, fsOpts).delay(READ_DELAY).then (contents)->
+		awaitWatcher.then ()->
 			if not resultPath
-				return emptyResults
+				fs.writeFileAsync(filePath, contents).then ()-> emptyResults
 			else
-				testWatcher.ready.then ()-> new Promise (resolve)->
-					testWatcher.on 'add', resolve
-					testWatcher.on 'change', resolve
+				awaitChange = new Promise (emitChange)->
+					testWatcher.on 'add', emitChange
+					testWatcher.on 'change', emitChange
 					testWatcher.add(resultPath)
-					Promise.delay(timeoutLength).then(resolve)
-				
-				.then (file)-> #if not file or path.resolve(file) is path.resolve(resultPath)
+					Promise.delay(timeoutLength).then(emitChange)
+					
+				fs.writeFileAsync(filePath, contents)
+				awaitChange.then (file)-> #if not file or path.resolve(file) is path.resolve(resultPath)
 					testWatcher.unwatch(resultPath)
 
 					fs.readFileAsync(resultPath, fsOpts)
@@ -55,7 +58,6 @@ triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 						
 						.catch ()->
 							return emptyResults
-
 
 
 
