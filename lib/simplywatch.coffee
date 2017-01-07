@@ -73,8 +73,9 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		@timeout = {process:null, final:null}
 		@lastTasklist = Promise.resolve()
 		
-		@add = (filePath, watchContext, eventType)->
+		@add = (filePath, watchContext, eventType, depStack=[])->
 			file = getFile(filePath, watchContext, options, canSkipRescan=!eventType)
+			depStack.push(file) unless depStack.includes(file)
 			return if file.executingCommand
 
 			logEvent = ()->
@@ -102,7 +103,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 						@beginProcess()
 				else
 					logEvent() if wasNotLogged
-					@add(depFile.filePath, watchContext) for depFile in file.deps when not file.checkIfImportsFile(depFile, false)
+					@add(depFile.filePath, watchContext, null, depStack) for depFile in file.deps when not depStack.includes(depFile)
 
 
 
