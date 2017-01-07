@@ -76,7 +76,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		@add = (filePath, watchContext, eventType)->
 			file = getFile(filePath, watchContext, options, canSkipRescan=!eventType)
 			return if file.executingCommand
-			
+
 			logEvent = ()->
 				notes = if not file.deps.length then '' else do ()->
 					depNames = file.deps.map((file)->file.pathParams.base).join(', ')
@@ -126,7 +126,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			logIteration = eventsLog.iteration++
 			invokeTime = Date.now()
 			
-			@lastTasklist = @lastTasklist.then ()=> #new Promise (resolve)=>
+			@lastTasklist = @lastTasklist.then ()=>
 				debug.process "Process Start"
 				eventsLog.output(logIteration, console)
 				hasFailedTasks = false
@@ -136,16 +136,15 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 					skip: ()-> not file.canExecuteCommand(invokeTime)
 					
-					task: ()=> new Promise (resolve, reject)=>				
-						file.executeCommand(options.command).then ({err, stdout, stderr})=>
-							if isValidOutput(stdout) then @executionLogs.log[file.filePathShort] = stdout
+					task: ()=> file.executeCommand(options.command).then ({err, stdout, stderr})=>
+						if isValidOutput(stdout) then @executionLogs.log[file.filePathShort] = stdout
 
-							if isValidOutput(stderr) and not isValidOutput(err)
-								@executionLogs.log[file.filePathShort] = stderr
-							else if isValidOutput(err)
-								@executionLogs.error[file.filePathShort] = stderr or err
+						if isValidOutput(stderr) and not isValidOutput(err)
+							@executionLogs.log[file.filePathShort] = stderr
+						else if isValidOutput(err)
+							@executionLogs.error[file.filePathShort] = stderr or err
 
-							if isValidOutput(err) then reject(hasFailedTasks=true) else resolve()
+						if isValidOutput(err) then Promise.reject(hasFailedTasks=true) else Promise.resolve()
 
 				), 'concurrent':true
 				
