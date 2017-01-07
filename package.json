@@ -70,7 +70,7 @@
     "svg2png": "^3.0.1",
     "through": "^2.3.8"
   },
-  "peerDependencies": {
+  "optionalDependencies": {
     "fsevents": "^1.0.15"
   }
 }
