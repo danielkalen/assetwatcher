@@ -74,7 +74,8 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		@lastTasklist = Promise.resolve()
 		
 		@add = (filePath, watchContext, eventType)->
-			file = getFile(filePath, watchContext, options)
+			file = getFile(filePath, watchContext, options, canSkipRescan=!eventType)
+			return if file.executingCommand
 			
 			logEvent = ()->
 				notes = if not file.deps.length then '' else do ()->
@@ -89,7 +90,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 					logEvent()
 				else
 					wasNotLogged = true
-			
+
 			file.scanProcedure.then ()=>
 				fileDeps = file.deps
 				if fileDeps.length
@@ -109,12 +110,13 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 		@beginProcess = ()->
 			debug.process "Add process to queue"
 			clearTimeout(@timeout.process)
+
 			@timeout.process = setTimeout ()=>
 				list = (file for filePath,file of @list)
 				@list = {}
 				
 				@process(list)
-			, 300		
+			, 300
 		
 
 
@@ -124,7 +126,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			logIteration = eventsLog.iteration++
 			invokeTime = Date.now()
 			
-			@lastTasklist = @lastTasklist.then ()=> new Promise (resolve)=>
+			@lastTasklist = @lastTasklist.then ()=> #new Promise (resolve)=>
 				debug.process "Process Start"
 				eventsLog.output(logIteration, console)
 				hasFailedTasks = false
@@ -150,7 +152,6 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 				tasks.run().then ()=>
 					debug.process "Process End"
 					@outputLogs()
-					resolve()
 					@processFinalCommand(hasFailedTasks)
 
 				

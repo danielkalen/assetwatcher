@@ -3,6 +3,7 @@ fs = Promise.promisifyAll require 'fs'
 Path = require 'path'
 exec = require('child_process').exec
 chalk = require 'chalk'
+md5 = require 'md5'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
@@ -53,7 +54,9 @@ File::getExtension = ()->
 
 
 
-File::process = ()->
+File::process = (canSkipRescan)->
+	return @ if canSkipRescan and @content
+	
 	@scanProcedure = Promise.bind(@)
 		.then(@getContents)
 		.then(@scanForImports)
@@ -62,12 +65,16 @@ File::process = ()->
 
 
 
-File::getContents = ()-> new Promise (resolve)=>
-	if not @fileExt then resolve()
+File::getContents = ()->
+	if not @fileExt then Promise.resolve()
 	else
 		fs.readFileAsync(@filePath, {encoding:'utf8'})
-			.then (@content)=> resolve()
-			.catch(resolve)
+			.then (content)=>
+				@content = content
+				@hash = md5(content)
+				Promise.resolve()
+			
+			.catch ()-> Promise.resolve()
 
 
 File::checkIfImportsFile = (targetFile, deepScan=true)->
@@ -85,14 +92,21 @@ File::checkIfImportsFile = (targetFile, deepScan=true)->
 	checkArray(@imports)
 
 
+File::getImportsFromHistory = (targetHash)-> if not targetHash then
+
 
 File::scanForImports = ()->
-	if @canScanImports()
+	if scannedHashes[@hash]
+		@imports = scannedHashes[@hash].slice()
+		return Promise.resolve()
+	
+	else if @canScanImports()
 		@lastScanned = Date.now()
 		@imports.length = 0
 		debug.imports "Scanning #{@filePathShort}"
+	
 	else
-		return Promise.delay(20)
+		return Promise.resolve()
 	
 	
 	@scanProcedure = SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
@@ -110,7 +124,8 @@ File::scanForImports = ()->
 			@imports.push(childFile)
 			childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 
-
+		scannedHashes[@hash] = @imports.slice()
+		
 		if @imports.length
 			Promise.map @imports, (childFile)-> childFile.scanProcedure
 		else
@@ -129,11 +144,12 @@ File::prepareCommandString = (command)->
 
 
 
-File::executeCommand = (command)-> new Promise (resolve)=> #if not @canExecuteCommand(invokeTime) then resolve({}) else
+File::executeCommand = (command)-> @executingCommand = new Promise (resolve)=>
 	command = @prepareCommandString(command)
 	@lastProcessed = Date.now()
 
 	exec command, (err, stdout, stderr)=>
+		delete @executingCommand
 		resolve({err, stdout, stderr})
 
 
@@ -159,9 +175,9 @@ File::canScanImports = ()->
 
 
 
-
+scannedHashes = {}
 fileInstances = {}
 badFilesDeps = {} # For tracking deps of files that were provided without an extension and didn't exist in the referenced directory
 
-module.exports = getFile = (filePath, watchContext, options)->
-	fileInstances[filePath]?.process() or fileInstances[filePath] = new File(filePath, watchContext, options)
+module.exports = getFile = (filePath, watchContext, options, canSkipRescan)->
+	fileInstances[filePath]?.process(canSkipRescan) or fileInstances[filePath] = new File(filePath, watchContext, options)
