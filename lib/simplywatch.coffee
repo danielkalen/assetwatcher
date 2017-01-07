@@ -152,6 +152,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 					debug.process "Process End"
 					@outputLogs()
 					@processFinalCommand(hasFailedTasks)
+					Promise.resolve()
 
 				
 
