@@ -101,12 +101,13 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 						@beginProcess()
 				else
 					logEvent() if wasNotLogged
-					@add(depFile.filePath, watchContext) for depFile in file.deps
+					@add(depFile.filePath, watchContext) for depFile in file.deps when not file.checkIfImportsFile(depFile, false)
 
 
 
 
 		@beginProcess = ()->
+			debug.process "Add process to queue"
 			clearTimeout(@timeout.process)
 			@timeout.process = setTimeout ()=>
 				list = (file for filePath,file of @list)
@@ -119,10 +120,12 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 		@process = (list)->
+			debug.process "Process Prep"
 			logIteration = eventsLog.iteration++
 			invokeTime = Date.now()
 			
 			@lastTasklist = @lastTasklist.then ()=> new Promise (resolve)=>
+				debug.process "Process Start"
 				eventsLog.output(logIteration, console)
 				hasFailedTasks = false
 				
@@ -145,6 +148,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 				), 'concurrent':true
 				
 				tasks.run().then ()=>
+					debug.process "Process End"
 					@outputLogs()
 					resolve()
 					@processFinalCommand(hasFailedTasks)

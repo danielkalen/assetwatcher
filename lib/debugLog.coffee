@@ -5,3 +5,4 @@ module.exports =
 	'watch': util.debuglog('watch')
 	'imports': util.debuglog('imports')
 	'ignored': util.debuglog('ignored')
+	'process': util.debuglog('process')

@@ -54,9 +54,9 @@ File::getExtension = ()->
 
 
 File::process = ()->
-	if @canScanImports()
-		@lastScanned = Date.now()
-		@scanProcedure = Promise.bind(@).then(@getContents).then(@scanForImports)
+	@scanProcedure = Promise.bind(@)
+		.then(@getContents)
+		.then(@scanForImports)
 
 	return @
 
@@ -70,15 +70,32 @@ File::getContents = ()-> new Promise (resolve)=>
 			.catch(resolve)
 
 
-
-
-
-
-File::scanForImports = ()-> #new Promise (resolve)=>
-	@imports.length = 0
+File::checkIfImportsFile = (targetFile, deepScan=true)->
+	iteratedArrays = [@imports]
 	
-	debug.imports "Scanning #{@filePathShort}"
-	SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
+	checkArray = (importsArray)=>
+		importsArray.includes(targetFile) or
+		importsArray.find (currentFile)->
+			if iteratedArrays.includes(currentFile.imports)
+				return false
+			else
+				iteratedArrays.push(currentFile.imports)
+				return if deepScan then checkArray(currentFile.imports) else false
+
+	checkArray(@imports)
+
+
+
+File::scanForImports = ()->
+	if @canScanImports()
+		@lastScanned = Date.now()
+		@imports.length = 0
+		debug.imports "Scanning #{@filePathShort}"
+	else
+		return Promise.delay(20)
+	
+	
+	@scanProcedure = SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
 			debug.imports "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
 			childPath = Path.normalize("#{@fileDir}/#{childPath}")
@@ -91,7 +108,7 @@ File::scanForImports = ()-> #new Promise (resolve)=>
 
 			watcher.add(childFile.filePath)
 			@imports.push(childFile)
-			childFile.deps.push(@) unless childFile.deps.includes(@)
+			childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 
 
 		if @imports.length
