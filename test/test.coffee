@@ -75,7 +75,7 @@ triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 
 
 suite "SimplyWatch", ()->
-	suiteTeardown ()-> fs.removeAsync('test/temp')
+	suiteTeardown ()-> fs.removeAsync('test/temp') unless process.env.KEEP
 	suiteSetup ()-> fs.emptyDirAsync('test/temp').then ()->
 		testWatcher = chokidar.watch 'test/temp/**',
 			'cwd':process.cwd()
@@ -89,7 +89,7 @@ suite "SimplyWatch", ()->
 
 
 	suite "File handling", ()->
-		suiteTeardown ()-> fs.emptyDirAsync 'test/temp'
+		suiteTeardown ()-> fs.emptyDirAsync 'test/temp' unless process.env.KEEP
 		
 		test "If a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
 			options = globs:['test/samples/sass/*'], command:'echo {{base}} >> test/temp/one'
@@ -122,7 +122,7 @@ suite "SimplyWatch", ()->
 
 
 	suite "Watching & Command Execution", ()->
-		suiteTeardown ()-> fs.emptyDirAsync 'test/temp'
+		suiteTeardown ()-> fs.emptyDirAsync 'test/temp' unless process.env.KEEP
 
 
 		test "Will execute a given command on all matched files/dirs in a given glob upon change", ()->
@@ -337,7 +337,7 @@ suite "SimplyWatch", ()->
 				
 				SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
 					triggerFileChange('test/samples/js/mainCopy.js').then ()->
-						Promise.delay(100).then ()->
+						Promise.delay(350).then ()->
 							triggerFileChange('test/samples/js/mainCopy2.js', 'test/temp/ten').then ({result, resultLines})->
 								expect(resultLines.length).to.equal 1
 								expect(resultLines[0]).to.equal 'Final command executed'

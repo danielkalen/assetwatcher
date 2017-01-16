@@ -165,10 +165,8 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 			if hasFailedTasks
 				console.log "#{chalk.bgRed.bold('NOT')} #{chalk.bgBlue.bold('Executing Final Command')} #{chalk.dim('(because some tasks failed)')}"
 			else
-				@timeout.final = @lastTasklist.then ()=>
-					setTimeout ()=>
-						@finalCommand()
-					, options.finalCommandDelay
+				@timeout.final = @lastTasklist.delay(options.finalCommandDelay)
+					.then ()=> @finalCommand()
 
 
 
