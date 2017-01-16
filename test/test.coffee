@@ -332,7 +332,7 @@ suite "SimplyWatch", ()->
 
 
 			
-			test "The final command will only execute once in a given delay (options.finalCommandDelay)", ()->
+			test "The final command will only execute once in a given delay (options.finalCommandDelay)", ()-> if process.env.CI then @skip() else
 				options = globs:['test/samples/js/**'], command:' ', finalCommand:'echo "Final command executed" >> test/temp/ten', finalCommandDelay:500
 				
 				SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
