@@ -112,7 +112,7 @@ File::scanForImports = ()->
 	@scanProcedure = SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
 			debug.imports "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
-			childPath = Path.normalize("#{@fileDir}/#{childPath}")
+			childPath = Path.resolve(@fileDir, childPath)
 			childFile = getFile(childPath, @watchContext, @options)
 
 			if not childFile.fileExt # Indicates provided childPath didn't have a file extension and has yet to be discovered. Delete from cache so that next time a discovery will be re-attempted
