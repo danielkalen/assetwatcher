@@ -1,4 +1,3 @@
-process.title = 'simplywatch'
 require 'nodejs-dashboard' if process.env.DEBUG
 
 fs = require 'fs'
@@ -30,6 +29,7 @@ if args.help
 	process.stdout.write(yargs.help());
 	process.exit(0)
 else
+	process.title = "simplywatch #{options.globs}"	
 	require('./simplywatch')(options)
 
 	if args.background
