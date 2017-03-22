@@ -161,7 +161,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 		@processFinalCommand = (hasFailedTasks)-> if options.finalCommand
-			@timeout.final.cancel() if @timeout.final
+			@timeout.final.cancel() if @timeout.final and not @timeout.final._isCancelled()
 			if hasFailedTasks
 				console.log "#{chalk.bgRed.bold('NOT')} #{chalk.bgBlue.bold('Executing Final Command')} #{chalk.dim('(because some tasks failed)')}"
 			else
