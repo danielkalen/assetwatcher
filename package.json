@@ -50,6 +50,7 @@
     "glob": "^7.0.3",
     "md5": "^2.2.1",
     "micromatch": "^2.3.11",
+    "moment": "^2.18.1",
     "simplyimport": "^3.2.6",
     "window-size": "^0.2.0",
     "yargs": "^3.29.0"
