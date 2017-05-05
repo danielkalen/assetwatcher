@@ -15,6 +15,7 @@ File = (@filePath, @watchContext, @options)->
 	@fileDir = Path.dirname(@filePath)
 	@fileExt = @getExtension()
 	@filePathNoExt = @fileDir+'/'+Path.basename(@filePath, @fileExt)
+	@isCoffee = @fileExt is '.coffee'
 	@relDir = Path.dirname(@watchContext)
 	@relDir = if @relDir[0] is '.' then @relDir.slice(1) else @relDir
 	@relDir = @fileDirShort.replace @relDir, ''
@@ -109,7 +110,7 @@ File::scanForImports = ()->
 		return Promise.resolve()
 	
 	
-	@scanProcedure = SimplyImport.scanImports(@content or '', {isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
+	@scanProcedure = SimplyImport.scanImports(@content or '', {@isCoffee, isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
 			debug.imports "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
 			childPath = Path.resolve(@fileDir, childPath)
