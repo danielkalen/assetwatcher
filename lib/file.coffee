@@ -7,7 +7,7 @@ md5 = require 'md5'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
-debug = require './debugLog'
+debug = require 'debug'
 
 File = (@filePath, @watchContext, @options)->
 	@filePathShort = @filePath.replace process.cwd()+'/', ''
@@ -27,7 +27,7 @@ File = (@filePath, @watchContext, @options)->
 	@lastScanned = null
 	@execCount = 1
 
-	debug.file "New File object for #{chalk.dim @filePathShort}"
+	debug 'simplywatch:file', "New File object for #{chalk.dim @filePathShort}"
 	return @process()
 
 
@@ -104,7 +104,7 @@ File::scanForImports = ()->
 	else if @canScanImports()
 		@lastScanned = Date.now()
 		@imports.length = 0
-		debug.imports "Scanning #{@filePathShort}"
+		debug 'simplywatch:imports', "Scanning #{@filePathShort}"
 	
 	else
 		return Promise.resolve()
@@ -112,7 +112,7 @@ File::scanForImports = ()->
 	
 	@scanProcedure = SimplyImport.scanImports(@content or '', {@isCoffee, isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
-			debug.imports "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
+			debug 'simplywatch:imports', "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
 			childPath = Path.resolve(@fileDir, childPath)
 			childFile = getFile(childPath, @watchContext, @options)
 
@@ -130,7 +130,7 @@ File::scanForImports = ()->
 		if @imports.length
 			Promise.map @imports, (childFile)-> childFile.scanProcedure
 		else
-			debug.imports "0 imports found in #{chalk.dim @filePathShort}"
+			debug 'simplywatch:imports', "0 imports found in #{chalk.dim @filePathShort}"
 
 
 

@@ -5,11 +5,11 @@ chalk = require 'chalk'
 yargs = require 'yargs'
 yargs
 	.usage("#{chalk.bgYellow.black('Usage')} simplywatch -g <glob> -x <command to execute> [options]")
-	.options(require './cliOptions')
-	.epilogue(require './cliExtraMessage')
+	.options(require './options')
+	.epilogue(require './extraDocs')
 	.wrap(yargs.terminalWidth())
 	.help('h')
-	.version(()-> require('../package.json').version)
+	.version(()-> require('../../package.json').version)
 args = yargs.argv
 
 options = 
@@ -30,7 +30,7 @@ if args.help
 	process.exit(0)
 else
 	process.title = "simplywatch #{options.globs}"	
-	require('./simplywatch')(options)
+	require('../simplywatch')(options)
 
 	if args.background
 		if process.env.__daemon

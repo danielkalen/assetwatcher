@@ -11,10 +11,10 @@ chalk = require 'chalk'
 Listr = require '@danielkalen/listr'
 regEx = require './regex'
 watcher = require './watcher'
-getFile = require './FileConstructor'
+getFile = require './file'
 eventsLog = require './eventsLog'
-defaultOptions = require './defaultOptions'
 debug = require './debugLog'
+defaults = require './defaults'
 
 
 
