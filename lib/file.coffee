@@ -1,13 +1,13 @@
 Promise = require 'bluebird'
-fs = Promise.promisifyAll require 'fs'
+fs = require 'fs-jetpack'
 Path = require 'path'
 exec = require('child_process').exec
 chalk = require 'chalk'
 md5 = require 'md5'
+debug = require 'debug'
 SimplyImport = require 'simplyimport'
 regEx = require './regex'
 watcher = require './watcher'
-debug = require 'debug'
 
 File = (@filePath, @watchContext, @options)->
 	@filePathShort = @filePath.replace process.cwd()+'/', ''
@@ -41,7 +41,7 @@ File::getExtension = ()->
 	else
 		try
 			thisFileName = Path.basename(@filePath)
-			files = fs.readdirSync(@fileDir).forEach (filePath)->
+			files = fs.list(@fileDir).forEach (filePath)->
 				fileExt = Path.extname(filePath)
 				fileName = Path.basename(filePath, fileExt)
 				extension = fileExt if fileName is thisFileName
@@ -67,15 +67,13 @@ File::process = (canSkipRescan)->
 
 
 File::getContents = ()->
-	if not @fileExt then Promise.resolve()
+	if not @fileExt
+		Promise.resolve()
 	else
-		fs.readFileAsync(@filePath, {encoding:'utf8'})
-			.then (content)=>
-				@content = content
-				@hash = md5(content)
-				Promise.resolve()
-			
-			.catch ()-> Promise.resolve()
+		Promise.bind(@)
+			.then ()-> fs.readAsync(@filePath)
+			.then (content)-> @hash = md5(@content=content)
+			.catch ()->
 
 
 File::checkIfImportsFile = (targetFile, deepScan=true)->
