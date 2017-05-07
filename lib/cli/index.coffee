@@ -1,5 +1,3 @@
-require 'nodejs-dashboard' if process.env.DEBUG
-
 fs = require 'fs'
 chalk = require 'chalk'
 yargs = require 'yargs'
@@ -31,23 +29,4 @@ if args.help
 else
 	process.title = "simplywatch #{options.globs}"	
 	require('../simplywatch')(options)
-
-	if args.background
-		if process.env.__daemon
-			console.log "Running as daemon - PID #{process.pid}"
-		
-			notifyDeath = ()-> console.log 'KILLED - exiting'; process.exit()
-			process.on 'SIGTERM', notifyDeath
-			process.on 'SIGINT', notifyDeath
-		
-
-		else
-			fs.open args.log, 'w', (err, outputFile)->
-				throw err if err
-				daemon = require('daemon-plus')({stdout:outputFile, stderr:outputFile}, true)
-				
-				console.log chalk.bgGreen.black.bold('Running as daemon'), "PID #{daemon.pid}"
-				process.exit()
-
-
-
+	require('../daemon')
