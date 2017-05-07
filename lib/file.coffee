@@ -10,8 +10,8 @@ regEx = require './regex'
 watcher = require './watcher'
 
 File = (@filePath, @watchContext, @options)->
-	@filePathShort = @filePath.replace process.cwd()+'/', ''
-	@fileDirShort = Path.dirname(@filePathShort)
+	@path = @filePath.replace process.cwd()+'/', ''
+	@fileDirShort = Path.dirname(@path)
 	@fileDir = Path.dirname(@filePath)
 	@fileExt = @getExtension()
 	@filePathNoExt = @fileDir+'/'+Path.basename(@filePath, @fileExt)
@@ -27,7 +27,7 @@ File = (@filePath, @watchContext, @options)->
 	@lastScanned = null
 	@execCount = 1
 
-	debug 'simplywatch:file', "New File object for #{chalk.dim @filePathShort}"
+	debug 'simplywatch:file', "New File object for #{chalk.dim @path}"
 	return @process()
 
 
@@ -48,7 +48,7 @@ File::getExtension = ()->
 
 		if extension
 			@filePath += extension
-			@filePathShort += extension
+			@path += extension
 			fileInstances[@filePath] = @
 
 		return extension or ''
@@ -102,7 +102,7 @@ File::scanForImports = ()->
 	else if @canScanImports()
 		@lastScanned = Date.now()
 		@imports.length = 0
-		debug 'simplywatch:imports', "Scanning #{@filePathShort}"
+		debug 'simplywatch:imports', "Scanning #{@path}"
 	
 	else
 		return Promise.resolve()
@@ -110,7 +110,7 @@ File::scanForImports = ()->
 	
 	@scanProcedure = SimplyImport.scanImports(@content or '', {@isCoffee, isStream:true, pathOnly:true, context:@fileDir}).then (imports)=>
 		imports.forEach (childPath)=>
-			debug 'simplywatch:imports', "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @filePathShort}"
+			debug 'simplywatch:imports', "Found #{@fileDirShort+'/'+childPath} in #{chalk.dim @path}"
 			childPath = Path.resolve(@fileDir, childPath)
 			childFile = getFile(childPath, @watchContext, @options)
 
@@ -128,14 +128,14 @@ File::scanForImports = ()->
 		if @imports.length
 			Promise.map @imports, (childFile)-> childFile.scanProcedure
 		else
-			debug 'simplywatch:imports', "0 imports found in #{chalk.dim @filePathShort}"
+			debug 'simplywatch:imports', "0 imports found in #{chalk.dim @path}"
 
 
 
 
 File::prepareCommandString = (command)->
 	formattedCommand = command.replace regEx.placeholder, (entire, placeholder)=> switch
-		when placeholder is 'path' then @filePathShort
+		when placeholder is 'path' then @path
 		when @pathParams[placeholder]? then @pathParams[placeholder]
 		else entire
 
