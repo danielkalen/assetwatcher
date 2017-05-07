@@ -13,8 +13,8 @@ regEx = require './regex'
 watcher = require './watcher'
 getFile = require './file'
 eventsLog = require './eventsLog'
-debug = require './debugLog'
 defaults = require './defaults'
+debug = require 'debug'
 
 
 
@@ -24,7 +24,7 @@ defaults = require './defaults'
 
 
 module.exports = (passedOptions)-> new Promise (resolve)->
-	options = extend({}, defaultOptions, passedOptions)
+	options = extend({}, defaults, passedOptions)
 	console = new Console(options.stdout, options.stderr)
 	if typeof options.globs is 'string' then options.globs = [options.globs]
 	if options.globs.length is 0 then throw new Error "No globs were provided"
@@ -44,7 +44,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 	scanInitial = (globToScan)->
 		Glob(globToScan, {nodir:true, dot:true}).then (files)->
 			for filePath in files
-				debug.fsInit(filePath)
+				debug 'simplywatch:fsInit', filePath
 				filePath = absPath(filePath)
 				getFile(filePath, globToScan, options) unless filePath.includes('.git')
 			return
@@ -53,7 +53,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 	isIgnored = (path)->
 		for glob in options.ignoreGlobs
 			if globMatch.contains(path, glob)
-				debug.ignored(path)
+				debug 'simplywatch:ignored', path
 				return true
 		
 		return false
@@ -109,7 +109,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 		@beginProcess = ()->
-			debug.process "Add process to queue"
+			debug 'simplywatch:process', "Add process to queue"
 			clearTimeout(@timeout.process)
 
 			@timeout.process = setTimeout ()=>
@@ -123,12 +123,12 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 
 		@process = (list)->
-			debug.process "Process Prep"
+			debug 'simplywatch:process', "Process Prep"
 			logIteration = eventsLog.iteration++
 			invokeTime = Date.now()
 			
 			@lastTasklist = @lastTasklist.then ()=>
-				debug.process "Process Start"
+				debug 'simplywatch:process', "Process Start"
 				eventsLog.output(logIteration, console)
 				hasFailedTasks = false
 				
@@ -150,7 +150,7 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 				), 'concurrent':true
 				
 				tasks.run().then ()=>
-					debug.process "Process End"
+					debug 'simplywatch:process', "Process End"
 					@outputLogs()
 					@processFinalCommand(hasFailedTasks)
 					Promise.resolve()
@@ -234,11 +234,11 @@ module.exports = (passedOptions)-> new Promise (resolve)->
 
 			
 
-			watcher.on 'ready', 	(file)-> debug.watch "WATCHER Ready"
-			watcher.on 'add', 		(file)-> debug.watch "ADD #{file}"
-			watcher.on 'change', 	(file)-> debug.watch "CHANGE #{file}"
-			watcher.on 'unlink', 	(file)-> debug.watch "DELETE #{file}"
-			watcher.on 'error', 	(file)-> debug.watch "ERROR #{file}"
+			watcher.on 'ready', 	(file)-> debug 'simplywatch:watch', "WATCHER Ready"
+			watcher.on 'add', 		(file)-> debug 'simplywatch:watch', "ADD #{file}"
+			watcher.on 'change', 	(file)-> debug 'simplywatch:watch', "CHANGE #{file}"
+			watcher.on 'unlink', 	(file)-> debug 'simplywatch:watch', "DELETE #{file}"
+			watcher.on 'error', 	(file)-> debug 'simplywatch:watch', "ERROR #{file}"
 			watcher.on 'add', processFile(dirPath, 'Added')
 			watcher.on 'change', processFile(dirPath, 'Changed')
 
