@@ -38,7 +38,7 @@
     "prepublish": "npm run test",
     "makeexec": "chmod +x ./bin",
     "coverage": "istanbul cover --dir test/coverage/node node_modules/mocha/bin/_mocha -- $npm_package_mocha_opts && npm run coverage:badge",
-    "coverage:badge": "coffee .config/badge-gen.coffee",
+    "coverage:badge": "badge-gen -d .config/badges/coverage",
     "test": "mocha $npm_package_mocha_opts"
   },
   "dependencies": {
@@ -59,6 +59,7 @@
     "yargs": "^3.29.0"
   },
   "devDependencies": {
+    "badge-gen": "^1.0.2",
     "chai": "^3.5.0",
     "chai-spies": "^0.7.1",
     "coffee-script": "^1.10.0",
