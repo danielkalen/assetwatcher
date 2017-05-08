@@ -1,60 +1,80 @@
+require('array-includes').shim()
 require('object.values').shim()
 Promise = require 'bluebird'; Promise.config cancellation:true
-Glob = Promise.promisify require 'glob'
 EventfulPromise = require 'eventful-promise'
+Glob = Promise.promisify require 'glob'
 Console = require('console').Console
 absPath = require 'abs'
 extend = require 'smart-extend'
 chalk = require 'chalk'
-watcher = require './watcher'
-getFile = require './file'
-defaults = require './defaults'
-Queue = require './queue'
 debug = require 'debug'
+defaults = require './defaults'
+Watcher = require './watcher'
+File = require './file'
+Queue = require './queue'
 
 
 
 class WatchTask
 	constructor: (options)->
-		@options = extend.transform(
+		@settings = extend.transform(
 			'globs': (value)-> if Array.isArray(options.globs) then options.globs else [options.globs]
-		).clone(defaults, options)
+		).clone({cache:{}}, defaults, options)
 		
-		@logger = new Console(options.stdout, options.stderr)
-		@queue = new Queue(@options, @logger)
+		@logger = new Console(@settings.stdout, @settings.stderr)
+		@queue = new Queue(@settings, @logger)
+		@watcher = new Watcher
 
-		if @options.ignoreGlobs?.length
-			watcher.options.ignored.push(ignoreGlob) for ignoreGlob in options.ignoreGlobs
+		if @settings.ignoreGlobs?.length
+			@watcher.options.ignored.push(ignoreGlob) for ignoreGlob in options.ignoreGlobs
 
-		throw new Error "No globs were provided" if not options.globs.length
-		throw new Error "Execution command not provided" if not options.command
+		if not options.globs.length or options.globs.some((glob)-> typeof glob isnt 'string')
+			throw new Error "No/Invalid globs were provided"
+
+		if not options.command
+			throw new Error "Execution command not provided"
+
+		if not ['string','function'].some((type)-> typeof options.command is type)
+			throw new Error "Invalid execution command provided: only a string or a callback may be provided"
+
+		if options.finalCommand and not ['string','function'].some((type)-> typeof options.finalCommand is type)
+			throw new Error "Invalid final execution command provided: only a string or a callback may be provided"
+
+
+	processGlob: (globToScan)->
+		Promise.delay()
+			.then ()-> Glob(globToScan, {nodir:true, dot:true})
+			.each (filePath)->
+				debug 'simplywatch:fsInit', filePath
+				filePath = absPath(filePath)
+			
+				unless filePath.includes('.git')
+					File.get({filePath, watchContext:globToScan}, @settings) # Initiliaze a file constructor for this file
 
 
 	processFile: (watchContext, eventType)-> (filePath)=>
 		filePath = absPath(filePath)
-		@queue.add(filePath, watchContext, eventType)
+		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings
+		file.on 'childFile', (childFile)=> @watcher.add childFile.filePath
+		@queue.add(file, eventType)
 
 
-	scanInitial: (globToScan)->
-		Glob(globToScan, {nodir:true, dot:true}).then (files)->
-			for filePath in files
-				debug 'simplywatch:fsInit', filePath
-				filePath = absPath(filePath)
-				getFile(filePath, globToScan, options) unless filePath.includes('.git')
-			return
+	start: ()->
+		Promise.all @settings.globs, (dirPath)=>
+			@logger.log "#{chalk.bgYellow.black 'Watching'} #{chalk.dim dirPath}"
+			@watcher.on 'add',		@processFile(dirPath, 'Added')
+			@watcher.on 'change',	@processFile(dirPath, 'Changed')
+			
+			@watcher.add(dirPath)
+			@processGlob(dirPath)
 
 
-	isValidOutput: (output)->
-		output and
-		output isnt 'null' and
-		(
-			typeof output is 'string' and
-			output.length >= 1 or typeof output is 'object'
-		)
+	stop: ()->
+		@watcher.stop()
 
 
-	formatOutputMessage: (message)->
-		if @options.trim then message.slice(0, @options.trim) else message
+
+
 
 
 
@@ -62,30 +82,27 @@ class WatchTask
 createWatchTask = (options)->
 	task = new WatchTask(options)
 
-	EventfulPromise.resolve()
-		.then ()-> options.globs
-		.map (dirPath)->
-			task.watcher.add(dirPath)
-			@scanInitial(dirPath)
-
+	EventfulPromise.resolve(task.start())
+		.then ()->
+			task.watcher.on 'ready', ()=>
+				debug 'simplywatch:watch', "WATCHER Ready"
+				@emit('ready')
 			
-
-			task.watcher.on 'ready', 	(file)-> debug 'simplywatch:watch', "WATCHER Ready"
-			task.watcher.on 'add', 		(file)-> debug 'simplywatch:watch', "ADD #{file}"
-			task.watcher.on 'change', 	(file)-> debug 'simplywatch:watch', "CHANGE #{file}"
-			task.watcher.on 'unlink', 	(file)-> debug 'simplywatch:watch', "DELETE #{file}"
-			task.watcher.on 'error', 	(file)-> debug 'simplywatch:watch', "ERROR #{file}"
-			task.watcher.on 'add', @processFile(dirPath, 'Added')
-			task.watcher.on 'change', @processFile(dirPath, 'Changed')
-
-			logger.log chalk.bgYellow.black('Watching')+' '+chalk.dim(dirPath)
-
-		.then ()-> resolve(task.watcher)
-
-
-
-
-
+			task.watcher.on 'add', (file)=>
+				debug 'simplywatch:watch', "ADD #{file}"
+				@emit('add', file)
+			
+			task.watcher.on 'change', (file)=>
+				debug 'simplywatch:watch', "CHANGE #{file}"
+				@emit('change', file)
+			
+			task.watcher.on 'unlink', (file)=>
+				debug 'simplywatch:watch', "DELETE #{file}"
+				@emit('delete', file)
+			
+			task.watcher.on 'error', (file)=>
+				debug 'simplywatch:watch', "ERROR #{file}"
+				@emit('error', file)
 
 
 
