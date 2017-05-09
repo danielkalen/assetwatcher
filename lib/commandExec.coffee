@@ -10,10 +10,8 @@ class CommandExecution
 		@status = 'pending'
 		
 		if typeof @command is 'string' and @params
-			@command = @command.replace placeholderRegex, (entire, placeholder)=> switch
-				when placeholder is 'path' then @path
-				when @params[placeholder]? then @params[placeholder]
-				else entire
+			@command = @command.replace placeholderRegex, (entire, placeholder)=>
+				if @params[placeholder]? then @params[placeholder] else entire
 
 	start: ()->
 		@task =
@@ -27,8 +25,9 @@ class CommandExecution
 						execa.shell command, env:extend({'FORCE_COLOR':'true'}, process.env)
 
 			.then (result)-> result ||= defaultResult
-			.tap (@result)=> @status = 'success'
-			.tapCatch (@result)=> @status = 'failure'
+			.then (@result)=> @status = 'success'
+			.catch (@result)=> @status = 'failure'
+			.then ()=> @result
 
 
 	then: (cb)->

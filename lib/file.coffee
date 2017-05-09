@@ -33,6 +33,7 @@ class File extends require('events')
 		@relDir = if @relDir[0] is '.' then @relDir.slice(1) else @relDir
 		@relDir = @dir.replace @relDir, ''
 		@pathParams = Path.parse @filePath
+		@pathParams.path = @filePath
 		@pathParams.reldir = @relDir.slice(1)
 		@deps = File.badFilesDeps[@filePathNoExt] or []
 		@imports = []
@@ -110,7 +111,12 @@ class File extends require('events')
 			.then ()->
 				if File.scans[@hash]
 					debug.imports "using cached scan #{@pathDebug}"
-					@imports = File.scans[@hash].slice()
+					@imports = File.scans[@hash].map (filePath)=>
+						childFile = File.get({filePath, @watchContext}, @settings, @task)
+						childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
+						@task.emit('childFile', childFile)
+						return childFile
+					
 					promiseBreak()
 		
 				else if @canScanImports
@@ -128,7 +134,7 @@ class File extends require('events')
 				imports.forEach (childPath)=>
 					debug.imports "found #{chalk.dim Path.join @dir,childPath} in #{@pathDebug}"
 					childPath = Path.resolve(@fileDir, childPath)
-					childFile = File.get({filePath:childPath, @watchContext}, @settings)
+					childFile = File.get({filePath:childPath, @watchContext}, @settings, @task)
 
 					if not childFile.fileExt # Indicates provided childPath didn't have a file extension and has yet to be discovered. Delete from cache so that next time a discovery will be re-attempted
 						File.badFilesDeps[childPath] ?= []
@@ -140,7 +146,7 @@ class File extends require('events')
 					childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 
 			.then ()->
-				File.scans[@hash] = @imports.slice()
+				File.scans[@hash] = @imports.map (childFile)-> childFile.filePath
 				
 				if @imports.length
 					Promise.map @imports, (childFile)-> childFile.scanProcedure

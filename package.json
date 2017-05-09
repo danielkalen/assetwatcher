@@ -33,7 +33,7 @@
     "url": "https://github.com/danielkalen/simplywatch"
   },
   "license": "MIT",
-  "mocha_opts": "-u tdd --compilers coffee:coffee-script/register --slow 3000 --timeout 10000 -R spec",
+  "mocha_opts": "-u tdd --compilers coffee:coffee-register --slow 3000 --timeout 10000 -R spec",
   "scripts": {
     "prepublishonly": "npm run test",
     "makeexec": "chmod +x ./bin; chmod +x ./bin-debug",
@@ -80,8 +80,11 @@
     "fs-extra": "^0.30.0",
     "istanbul": "^0.4.5",
     "lcov-parse": "0.0.10",
+    "lodash": "^4.17.4",
     "mocha": "^3.0.2",
     "nodemon": "^1.8.1",
+    "p-wait-for": "^1.0.0",
+    "promise-retry": "^1.1.1",
     "request": "^2.74.0",
     "svg2png": "^3.0.1",
     "through": "^2.3.8"

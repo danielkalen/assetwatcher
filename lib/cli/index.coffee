@@ -6,21 +6,20 @@ yargs
 	.options(require './options')
 	.epilogue(require './extraDocs')
 	.wrap(yargs.terminalWidth())
-	.help('h')
 	.version(()-> require('../../package.json').version)
 args = yargs.argv
 
 options = 
-	'globs': args.g or args.glob or args._ or []
-	'ignoreGlobs': args.i or args.ignore or []
-	'command': args.x or args.execute
-	'processImports': args.p or args.processImports
-	'finalCommand': args.f or args.finally
-	'execDelay': args.d or args.delay
-	'finalCommandDelay': args.D or args.finallyDelay
-	'trim': parseFloat args.t or args.trim
-	'silent': args.s or args.silent
-	'haltSerial': args.H or args.haltSerial
+	'globs': args.glob or args._[0] or []
+	'command': args.exec or args._[1]
+	'ignoreGlobs': args.ignore or []
+	'processImports': args.processImports
+	'bufferTimeout': args.bufferTimeout
+	'finalCommand': args.finally
+	'finalCommandDelay': args.finallyDelay
+	'trim': parseFloat args.trim
+	'silent': args.silent
+	'haltSerial': args.haltSerial
 
 
 

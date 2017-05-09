@@ -1,13 +1,20 @@
-module.exports = 
-	'globs': []
-	'ignoreGlobs': []
-	'command': null
-	'processImports': true
-	'finalCommand': null
-	'execDelay': 1500
-	'finalCommandDelay': 500
-	'trim': 2000
-	'silent': false
-	'haltSerial': false
-	'stdout': if process.env.DEBUG?.includes('simplywatch:*') then require('fs').createWriteStream('/dev/null') else process.stdout
-	'stderr': if process.env.DEBUG?.includes('simplywatch:*') then require('fs').createWriteStream('/dev/null') else process.stderr
+if process.env.DEBUG?.includes('simplywatch:*')
+	stdout = stderr = require('fs').createWriteStream('/dev/null')
+else
+	stdout = process.stdout
+	stderr = process.stderr
+
+module.exports = {
+	stdout, stderr
+	globs: []
+	ignoreGlobs: []
+	command: null
+	processImports: false
+	finalCommand: null
+	bufferTimeout: 150
+	finalCommandDelay: 500
+	trim: 2000
+	silent: false
+	haltSerial: false
+	useFsEvents: true
+}

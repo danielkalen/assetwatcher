@@ -17,63 +17,72 @@ debug =
 	instance: require('debug')('simplywatch:instance')
 
 try Promise.config cancellation:true
+process.on 'warning', (e)-> console.warn(e.stack)
 process.on 'unhandledRejection', (err)-> throw err
-numberSettingFilter = (value)-> if typeof value is 'number' then not isNaN(value) else true
+coerceToArray = (value)-> if Array.isArray(value) then value else [value]
+coerceToNumber = (value)-> if typeof value is 'number' then not isNaN(value) else true
 
 
 class WatchTask extends require('events')
 	constructor: (options)->
 		@settings = extend.allowNull.transform(
-			'globs': (value)-> if Array.isArray(options.globs) then options.globs else [options.globs]
+			'globs': coerceToArray
+			'ignoreGlobs': coerceToArray
 		).filter(
-			'finalCommandDelay': numberSettingFilter
-			'execDelay': numberSettingFilter
-			'trim': numberSettingFilter
-		).clone({cache:{}}, defaults, options)
+			'finalCommandDelay': coerceToNumber
+			'execDelay': coerceToNumber
+			'trim': coerceToNumber
+		)({cache:{}}, defaults, options)
+
+		switch
+			when not @settings.globs.length or @settings.globs.some((glob)-> typeof glob isnt 'string')
+				throw new Error "No/Invalid globs were provided"
+
+			when not @settings.command
+				throw new Error "Execution command not provided"
+
+			when not ['string','function'].some((type)=> typeof @settings.command is type)
+				throw new Error "Invalid execution command provided: only a string or a callback may be provided"
+
+			when @settings.finalCommand and not ['string','function'].some((type)=> typeof @settings.finalCommand is type)
+				throw new Error "Invalid final execution command provided: only a string or a callback may be provided"
 		
 		@logger = new Console(@settings.stdout, @settings.stderr)
-		@queue = new Queue(@settings)
-		@watcher = new Watcher
-
-		@on 'childFile', (childFile)=> @watcher.add childFile.filePath
+		@queue = new Queue(@settings, @)
+		@watcher = new Watcher(@settings.useFsEvents)
 
 		if @settings.ignoreGlobs?.length
-			@watcher.options.ignored.push(ignoreGlob) for ignoreGlob in options.ignoreGlobs
+			@watcher.options.ignored.push(glob) for glob in @settings.ignoreGlobs
 
-		if not options.globs.length or options.globs.some((glob)-> typeof glob isnt 'string')
-			throw new Error "No/Invalid globs were provided"
+		@.on 'childFile', (childFile)=> @watcher.add childFile.filePath
 
-		if not options.command
-			throw new Error "Execution command not provided"
-
-		if not ['string','function'].some((type)-> typeof options.command is type)
-			throw new Error "Invalid execution command provided: only a string or a callback may be provided"
-
-		if options.finalCommand and not ['string','function'].some((type)-> typeof options.finalCommand is type)
-			throw new Error "Invalid final execution command provided: only a string or a callback may be provided"
 
 
 	processGlob: (globToScan)->
-		debug.instance "scanning #{globToScan}"
+		debug.instance "scanning #{chalk.dim globToScan}"
+
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
-			.each (filePath)=>
+			.map (filePath)=>
 				debug.init filePath
 				filePath = absPath(filePath)
 			
 				unless filePath.includes('.git')
 					File.get({filePath, watchContext:globToScan}, @settings, @) # Initiliaze a file constructor for this file
+						.scanProcedure
+		
+			.then ()-> debug.instance "scan complete #{chalk.dim globToScan}"
 
 
 	processFile: (watchContext, eventType)-> (filePath)=>
 		filePath = absPath(filePath)
 		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
-		file.on 'childFile', (childFile)=> @watcher.add childFile.filePath
 		@queue.add(file, eventType)
 
 
 	start: ()->
 		debug.instance 'start'
+		
 		Promise.map @settings.globs, (dirPath)=>
 			@logger.log "#{chalk.bgYellow.black 'Watching'} #{chalk.dim dirPath}"
 			@watcher.on 'add',		@processFile(dirPath, 'Added')
@@ -81,9 +90,12 @@ class WatchTask extends require('events')
 			
 			@watcher.add(dirPath)
 			@processGlob(dirPath)
+		# .then ()->
+		# 	console.log 'finished'
 
 
 	stop: ()->
+		@queue.stop()
 		@watcher.stop()
 
 
@@ -118,6 +130,9 @@ createWatchTask = (options)->
 			task.watcher.on 'error', (file)=>
 				debug.watch "ERROR #{file}"
 				@emit('error', file)
+
+		.then ()-> task.watcher.ready
+		.return(task)
 
 
 

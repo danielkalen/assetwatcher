@@ -2,6 +2,7 @@ Promise = require 'bluebird'
 EventfulPromise = require 'eventful-promise'
 ActionBuffer = require 'actionbuffer'
 cliTruncate = require 'cli-truncate'
+promiseBreak = require 'p-break'
 extend = require 'smart-extend'
 symbols = require 'log-symbols'
 stringify = require 'json-stringify-safe'
@@ -16,15 +17,15 @@ debug =
 	instance: require('debug')('simplywatch:instance')
 
 class Queue
-	constructor: (@settings)->
+	constructor: (@settings, @watchTask)->
 		debug.instance 'creating queue'
-		@timeout = final:null
+		@cycles = @finalCycles = 0
 		@logBuffer = before:[], after:[]
 		@logUpdate = require('log-update').create(@settings.stdout)
 		@finalCommandSpinner = require('ora')(stream:@settings.stdout) if @settings.finalCommand
 		@buffer = new ActionBuffer (list)=>
 			@process uniq(list)
-		, 150
+		, @settings.bufferTimeout
 	
 	
 	add: (file, eventType, depStack=[])->
@@ -45,20 +46,19 @@ class Queue
 					@log chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.path+notes)
 
 				if eventType
-					if @isIgnored(file.filePath)
-						pendingLog = true
-					else
-						logEvent()
+					logEvent() unless isIgnored=@isIgnored(file.filePath)
 
 
 				Promise.resolve(file.scanProcedure).bind(@)
 					.then ()-> file.deps.filter (depFile)=> not @isIgnored(depFile.filePath)
-					.then (fileDeps)->			
+					.then (fileDeps)->
 						if fileDeps.length is 0
 							@buffer.push(file) unless @isIgnored(file.filePath)
-
 						else
-							logEvent() if pendingLog
+							if isIgnored
+								logEvent()
+							else
+								@buffer.push(file) if @settings.processImports
 							
 							for depFile in file.deps when not depStack.includes(depFile)
 								@add(depFile, null, depStack)
@@ -68,12 +68,15 @@ class Queue
 
 	process: (list)->
 		debug.tasklist "prep #{list.length} files"
-		command = @settings.command
+		if @finalCommandPromise and not @finalCommandPromise.cancelled
+			@finalCommandPromise.cancelled = true
+			debug.tasklist 'final command - aborting previous'
 		
 		@taskListPromise = 
-		Promise.all([@taskListPromise, @finalCommandPromise]).bind(@)
+		Promise.all([@taskListPromise, @finalCommandExecPromise]).bind(@)
 			.tap ()-> debug.tasklist "start #{list.length} files"
-			.then ()->
+			.return @settings.command
+			.then (command)->
 				@running = new ()->
 					for file in list
 						@[file.path] = file.commandExecution =
@@ -107,7 +110,7 @@ class Queue
 					if fileOutput
 						fileOutput = cliTruncate(fileOutput, @settings.trim, position:'end') if @settings.trim
 						icon = if report.status is 'success' then symbols.success else symbols.error
-						finalOutput.push "#{icon} #{chalk.dim filePath}\n#{fileOutput}\n"
+						finalOutput.push "#{icon} #{chalk.dim filePath}\n#{@formatOutput fileOutput}"
 
 				@logRender(finalOutput)
 				@logStop(finalOutput.length)
@@ -116,6 +119,7 @@ class Queue
 			.then (failedItems)->
 				debug.tasklist "end #{failedItems.length} failures"
 				@startFinalCommand failedItems.length if @settings.finalCommand
+				@watchTask.emit 'cycle', ++@cycles
 				@running = false
 
 
@@ -124,41 +128,45 @@ class Queue
 
 
 
-	startFinalCommand: (hasFailedTasks)->
-		@finalCommandPromise?.cancelled = true
-	
+	startFinalCommand: (hasFailedTasks)->	
 		if hasFailedTasks
-			@log "#{chalk.bgRed.bold 'NOT'} #{chalk.bgBlue.bold 'Executing Final Command'} #{chalk.dim '(because some tasks failed)'}"
+			setTimeout ()=>
+				@log "#{chalk.blue.bold 'Final Command'} #{chalk.red.bold 'Aborted'} #{chalk.dim '(because some tasks failed)'}"
 		else
-			@finalCommandPromise = finalCommandPromise =
+			@finalCommandPromise = thisPromise =
 			Promise.bind(@)
 				.delay @settings.finalCommandDelay
-				.then ()-> @executeFinalCommand() unless @running or finalCommandPromise.cancelled
+				.then ()-> promiseBreak('aborted') if @running or @finalCommandPromise?.cancelled or thisPromise.cancelled
+				.then ()-> @executeFinalCommand()
+				.then ()-> @watchTask.emit 'finalCycle', ++@finalCycles
+				.catch promiseBreak.end
+				.then (reason)->
+					if reason is 'aborted' then debug.tasklist 'final command - aborted'
+					delete @finalCommandPromise if thisPromise is @finalCommandPromise
 
 
 
 	executeFinalCommand: ()->
+		debug.tasklist 'final command - running'
 		@finalCommandSpinner.start().text = "#{chalk.blue.bold('Final Command')}"
 		commandExec = CommandExecution(@settings.finalCommand)
 		
 		Promise.bind(@)
-			.then ()-> commandExec.start()
-			.then ()->
+			.then ()-> @finalCommandExecPromise = commandExec.start()
+			.then (result)->
 				output = ''
 				output += result.stdout if @isValidOutput(result.stdout)
 				output += result.stderr if @isValidOutput(result.stderr)
+				output = result.stack if result instanceof Error and not output
 				output = cliTruncate(output, @settings.trim, position:'end') if @settings.trim
 
 				if output
-					@finalCommandSpinner.succeed "#{@finalCommandSpinner.text}\n#{output}\n"
+					status = if commandExec.status is 'success' then 'succeed' else 'fail'
+					@finalCommandSpinner[status] "#{@finalCommandSpinner.text}\n#{@formatOutput output}"
 				else
 					@finalCommandSpinner.stop()
 
-			.catch (error)->				
-				error = if error instanceof Error then err.stack else String(error)
-				error = cliTruncate(error, @settings.trim, position:'end') if @settings.trim
-				
-				@finalCommandSpinner.fail "#{@finalCommandSpinner.text}\n#{output}\n"
+				debug.tasklist 'final command - finish'
 
 
 
@@ -179,6 +187,10 @@ class Queue
 			typeof output is 'object'
 		)
 
+
+	formatOutput: (output)->
+		output = output.replace /\n$/, ''
+		return output+'\n'
 
 
 	log: (item)->
@@ -202,6 +214,8 @@ class Queue
 		else
 			@logUpdate.clear()
 
+		@logUpdate @logBuffer.before.join('\n') if @logBuffer.before.length
+
 	logRender: (output)->
 		if not output
 			output = []
@@ -222,6 +236,14 @@ class Queue
 			output.push(item) for item in @logBuffer.after
 		
 		@logUpdate output.join('\n')
+
+
+	stop: ()->
+		debug.instance 'destroying queue'
+		@logBuffer.before.length = 0
+		@logBuffer.after.length = 0
+		@logStop()
+		@buffer.stop()
 
 
 
