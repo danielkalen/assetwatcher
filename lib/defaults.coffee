@@ -1,3 +1,4 @@
+### istanbul ignore next ###
 if process.env.DEBUG?.includes('simplywatch:*')
 	stdout = stderr = require('fs').createWriteStream('/dev/null')
 else

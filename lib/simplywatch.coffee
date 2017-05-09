@@ -16,9 +16,12 @@ debug =
 	watch: require('debug')('simplywatch:watch')
 	instance: require('debug')('simplywatch:instance')
 
-try Promise.config cancellation:true
-process.on 'warning', (e)-> console.warn(e.stack)
-process.on 'unhandledRejection', (err)-> throw err
+### istanbul ignore next ###
+do ()->
+	try Promise.config cancellation:true
+	process.on 'warning', (e)-> console.warn(e.stack)
+	process.on 'unhandledRejection', (err)-> throw err
+
 coerceToArray = (value)-> if Array.isArray(value) then value else [value]
 coerceToNumber = (value)-> if typeof value is 'number' then not isNaN(value) else true
 

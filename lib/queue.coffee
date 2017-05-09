@@ -1,5 +1,4 @@
 Promise = require 'bluebird'
-EventfulPromise = require 'eventful-promise'
 ActionBuffer = require 'actionbuffer'
 cliTruncate = require 'cli-truncate'
 promiseBreak = require 'p-break'
