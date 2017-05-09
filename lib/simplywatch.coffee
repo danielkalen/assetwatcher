@@ -1,29 +1,41 @@
 require('array-includes').shim()
 require('object.values').shim()
-Promise = require 'bluebird'; Promise.config cancellation:true
-EventfulPromise = require 'eventful-promise'
+Promise = require 'bluebird'
+EventfulPromise = require 'eventful-promise'; EventfulPromise.Promise = Promise
 Glob = Promise.promisify require 'glob'
 Console = require('console').Console
 absPath = require 'abs'
 extend = require 'smart-extend'
 chalk = require 'chalk'
-debug = require 'debug'
 defaults = require './defaults'
 Watcher = require './watcher'
 File = require './file'
 Queue = require './queue'
+debug =
+	init: require('debug')('simplywatch:init')
+	watch: require('debug')('simplywatch:watch')
+	instance: require('debug')('simplywatch:instance')
+
+try Promise.config cancellation:true
+process.on 'unhandledRejection', (err)-> throw err
+numberSettingFilter = (value)-> if typeof value is 'number' then not isNaN(value) else true
 
 
-
-class WatchTask
+class WatchTask extends require('events')
 	constructor: (options)->
-		@settings = extend.transform(
+		@settings = extend.allowNull.transform(
 			'globs': (value)-> if Array.isArray(options.globs) then options.globs else [options.globs]
+		).filter(
+			'finalCommandDelay': numberSettingFilter
+			'execDelay': numberSettingFilter
+			'trim': numberSettingFilter
 		).clone({cache:{}}, defaults, options)
 		
 		@logger = new Console(@settings.stdout, @settings.stderr)
-		@queue = new Queue(@settings, @logger)
+		@queue = new Queue(@settings)
 		@watcher = new Watcher
+
+		@on 'childFile', (childFile)=> @watcher.add childFile.filePath
 
 		if @settings.ignoreGlobs?.length
 			@watcher.options.ignored.push(ignoreGlob) for ignoreGlob in options.ignoreGlobs
@@ -42,25 +54,27 @@ class WatchTask
 
 
 	processGlob: (globToScan)->
+		debug.instance "scanning #{globToScan}"
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
-			.each (filePath)->
-				debug 'simplywatch:fsInit', filePath
+			.each (filePath)=>
+				debug.init filePath
 				filePath = absPath(filePath)
 			
 				unless filePath.includes('.git')
-					File.get({filePath, watchContext:globToScan}, @settings) # Initiliaze a file constructor for this file
+					File.get({filePath, watchContext:globToScan}, @settings, @) # Initiliaze a file constructor for this file
 
 
 	processFile: (watchContext, eventType)-> (filePath)=>
 		filePath = absPath(filePath)
-		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings
+		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
 		file.on 'childFile', (childFile)=> @watcher.add childFile.filePath
 		@queue.add(file, eventType)
 
 
 	start: ()->
-		Promise.all @settings.globs, (dirPath)=>
+		debug.instance 'start'
+		Promise.map @settings.globs, (dirPath)=>
 			@logger.log "#{chalk.bgYellow.black 'Watching'} #{chalk.dim dirPath}"
 			@watcher.on 'add',		@processFile(dirPath, 'Added')
 			@watcher.on 'change',	@processFile(dirPath, 'Changed')
@@ -80,28 +94,29 @@ class WatchTask
 
 
 createWatchTask = (options)->
+	debug.instance 'creating watch task'
 	task = new WatchTask(options)
 
 	EventfulPromise.resolve(task.start())
 		.then ()->
 			task.watcher.on 'ready', ()=>
-				debug 'simplywatch:watch', "WATCHER Ready"
+				debug.watch "WATCHER Ready"
 				@emit('ready')
 			
 			task.watcher.on 'add', (file)=>
-				debug 'simplywatch:watch', "ADD #{file}"
+				debug.watch "ADD #{file}"
 				@emit('add', file)
 			
 			task.watcher.on 'change', (file)=>
-				debug 'simplywatch:watch', "CHANGE #{file}"
+				debug.watch "CHANGE #{file}"
 				@emit('change', file)
 			
 			task.watcher.on 'unlink', (file)=>
-				debug 'simplywatch:watch', "DELETE #{file}"
+				debug.watch "DELETE #{file}"
 				@emit('delete', file)
 			
 			task.watcher.on 'error', (file)=>
-				debug 'simplywatch:watch', "ERROR #{file}"
+				debug.watch "ERROR #{file}"
 				@emit('error', file)
 
 

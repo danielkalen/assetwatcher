@@ -1,9 +1,11 @@
 Promise = require 'bluebird'
 chokidar = require '@danielkalen/chokidar'
 chalk = require 'chalk'
+debug = require('debug')('simplywatch:watch')
 
 class Watcher
 	constructor: ()->
+		debug 'creating watcher'
 		@watchedFiles = []
 		@_watcher = chokidar.watch [],
 			'cwd': process.cwd()
@@ -24,16 +26,20 @@ class Watcher
 
 
 	add: (path)-> unless @watchedFiles.includes(path)
+		debug "add #{chalk.dim path} to watchlist"
 		@watchedFiles.push(path)
 		@_watcher.add(path)
 
 	stop: ()->
+		debug 'closing watcher'
 		@_watcher.close()
 
+	on: (event, callback)->
+		@_watcher.on event, callback
 
 	Object.defineProperties @::,
 		options: get: -> @_watcher.options
-		on: get: -> @_watcher.on
+		# on: get: -> @_watcher.on
 
 
 	

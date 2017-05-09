@@ -1,4 +1,4 @@
-if args.background
+module.exports = (args)-> if args.background
 	if process.env.__daemon
 		console.log "Running as daemon - PID #{process.pid}"
 	

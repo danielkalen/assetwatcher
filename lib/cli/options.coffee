@@ -36,6 +36,11 @@ module.exports =
 		describe: 'Suppress any output from the executing command (including errors)'
 		type: 'boolean'
 		default: false
+	'H': 
+		alias: 'haltSerial'
+		describe: 'Halt running commands if a change is detected mid-execution'
+		type: 'boolean'
+		default: false
 	'b': 
 		alias: 'background'
 		describe: 'Run SimplyWatch as a background daemon'

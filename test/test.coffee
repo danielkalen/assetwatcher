@@ -1,16 +1,15 @@
 global.Promise = require 'bluebird'
-fs = Promise.promisifyAll require 'fs-extra'
+fs = require 'fs-jetpack'
 path = require 'path'
 chai = require 'chai'
 expect = chai.expect
 should = chai.should()
 execa = require 'execa'
 chokidar = require 'chokidar'
-fsOpts = encoding:'utf8'
 testWatcher = null
 customStdout = require('through')(null, null, autoDestroy:false)
 customStderr = require('through')(null, null, autoDestroy:false)
-
+Promise.config longStackTraces:true if process.env.CI
 
 
 SimplyWatch = (options)->
@@ -18,14 +17,14 @@ SimplyWatch = (options)->
 	options.stdout = customStdout
 	options.stderr = customStderr
 	
-	clearRequireCache()
+	# clearRequireCache()
 	require('../lib/simplywatch')(options)
 
 
 clearRequireCache = ()->
-	files = fs.readdirSync('lib')
+	files = fs.list('lib')
 	for file in files
-		delete require.cache["#{process.cwd()}/lib/#{file}"]
+		delete require.cache[require.resolve("../lib/#{file}")]
 
 
 
@@ -33,13 +32,15 @@ clearRequireCache = ()->
 
 triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 	emptyResults = 'result':'', 'resultLines':['null']
-	awaitWatcher = if resultPath then testWatcher.ready else Promise.resolve()
-	READ_DELAY = if process.platform is 'darwin' then 0 else 200
+	awaitWatcher = testWatcher.ready
 	
-	fs.readFileAsync(filePath, fsOpts).delay(READ_DELAY).then (contents)->
-		awaitWatcher.then ()->
+	Promise.resolve()
+		.then ()-> fs.readAsync(filePath, fsOpts)
+		.delay if process.platform is 'darwin' then 0 else 200
+		.tap ()-> awaitWatcher
+		.then (contents)->
 			if not resultPath
-				fs.writeFileAsync(filePath, contents).then ()-> emptyResults
+				fs.writeAsync(filePath, contents).return(emptyResults)
 			else
 				awaitChange = new Promise (emitChange)->
 					testWatcher.on 'add', emitChange
@@ -47,17 +48,16 @@ triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 					testWatcher.add(resultPath)
 					Promise.delay(timeoutLength).then(emitChange)
 					
-				fs.writeFileAsync(filePath, contents)
-				awaitChange.then (file)-> #if not file or path.resolve(file) is path.resolve(resultPath)
-					testWatcher.unwatch(resultPath)
-
-					fs.readFileAsync(resultPath, fsOpts)
-						.then (result)->
-							resultLines = result.split('\n').filter (validLine)-> validLine
-							return {result, resultLines}
-						
-						.catch ()->
-							return emptyResults
+				Promise.resolve()
+					.then ()-> fs.writeAsync(filePath, contents)
+					.then ()-> awaitChange
+					.then ()-> testWatcher.unwatch(resultPath)
+					.then ()-> fs.readAsync(resultPath, fsOpts)
+					.then (result)->
+						resultLines = result.split('\n').filter (validLine)-> validLine
+						return {result, resultLines}
+					
+					.catch ()-> emptyResults
 
 
 
@@ -76,7 +76,7 @@ triggerFileChange = (filePath, resultPath, timeoutLength=6000)->
 
 suite "SimplyWatch", ()->
 	suiteTeardown ()-> fs.removeAsync('test/temp') unless process.env.KEEP
-	suiteSetup ()-> fs.emptyDirAsync('test/temp').then ()->
+	suiteSetup ()-> fs.dirAsync('test/temp', empty:true).then ()->
 		testWatcher = chokidar.watch 'test/temp/**',
 			'cwd':process.cwd()
 			'awaitWriteFinish': 'stabilityThreshold': if process.env.CI then 1000 else 1
@@ -89,7 +89,7 @@ suite "SimplyWatch", ()->
 
 
 	suite "File handling", ()->
-		suiteTeardown ()-> fs.emptyDirAsync 'test/temp' unless process.env.KEEP
+		suiteTeardown ()-> fs.dirAsync('test/temp',empty:true) unless process.env.KEEP
 		
 		test "If a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
 			options = globs:['test/samples/sass/*'], command:'echo {{base}} >> test/temp/one'
@@ -122,7 +122,7 @@ suite "SimplyWatch", ()->
 
 
 	suite "Watching & Command Execution", ()->
-		suiteTeardown ()-> fs.emptyDirAsync 'test/temp' unless process.env.KEEP
+		suiteTeardown ()-> fs.dirAsync('test/temp', empty:true) unless process.env.KEEP
 
 
 		test "Will execute a given command on all matched files/dirs in a given glob upon change", ()->
@@ -158,10 +158,10 @@ suite "SimplyWatch", ()->
 			SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
 				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ()->
 					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', 500).then ()->
-						fs.readFileAsync('test/temp/three', encoding:'utf8').then (result)->
+						fs.readAsync('test/temp/three', encoding:'utf8').then (result)->
 							expect(result).to.equal "mainCopy\n"
 
-							fs.readFileAsync('test/temp/three.2', encoding:'utf8').catch (err)->
+							fs.readAsync('test/temp/three.2', encoding:'utf8').catch (err)->
 								expect(err).to.be.an.error
 
 								watcher.close()
@@ -302,8 +302,8 @@ suite "SimplyWatch", ()->
 				options = globs:['test/temp2/**'], command:'echo {{base}} >> test/temp/eight.5'
 				
 				Promise.all([
-					fs.ensureFileAsync('test/temp2/.git/insideGit.js')
-					fs.ensureFileAsync('test/temp2/git/outsideGit.js')
+					fs.fileAsync('test/temp2/.git/insideGit.js')
+					fs.fileAsync('test/temp2/git/outsideGit.js')
 				]).then ()->
 					SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
 						Promise.all([
@@ -316,8 +316,7 @@ suite "SimplyWatch", ()->
 							expect(resultLines.length).to.equal 1
 							expect(resultLines[0]).to.equal 'outsideGit.js'
 							
-							fs.remove 'test/temp2', ()->
-								watcher.close()
+							fs.removeAsync('test/temp2').then ()-> watcher.close()
 
 
 			

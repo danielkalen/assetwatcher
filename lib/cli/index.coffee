@@ -20,6 +20,7 @@ options =
 	'finalCommandDelay': args.D or args.finallyDelay
 	'trim': parseFloat args.t or args.trim
 	'silent': args.s or args.silent
+	'haltSerial': args.H or args.haltSerial
 
 
 
@@ -29,4 +30,4 @@ if args.help
 else
 	process.title = "simplywatch #{options.globs}"	
 	require('../simplywatch')(options)
-	require('../daemon')
+	require('../daemon')(args)

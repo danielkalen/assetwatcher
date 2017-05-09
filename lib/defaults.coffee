@@ -6,7 +6,8 @@ module.exports =
 	'finalCommand': null
 	'execDelay': 1500
 	'finalCommandDelay': 500
-	'trim': null
+	'trim': 2000
 	'silent': false
-	'stdout': process.stdout
-	'stderr': process.stderr
+	'haltSerial': false
+	'stdout': if process.env.DEBUG?.includes('simplywatch:*') then require('fs').createWriteStream('/dev/null') else process.stdout
+	'stderr': if process.env.DEBUG?.includes('simplywatch:*') then require('fs').createWriteStream('/dev/null') else process.stderr

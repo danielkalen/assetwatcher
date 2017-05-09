@@ -4,11 +4,11 @@ Path = require 'path'
 execa = require 'execa'
 chalk = require 'chalk'
 md5 = require 'md5'
-debug = require 'debug'
-stringToArgv = require 'string-argv'
 promiseBreak = require 'p-break'
 SimplyImport = require 'simplyimport'
-regEx = require './regex'
+debug =
+	file: require('debug')('simplywatch:file')
+	imports: require('debug')('simplywatch:imports')
 
 
 
@@ -16,14 +16,14 @@ class File extends require('events')
 	@scans = Object.create(null)
 	@badFilesDeps = Object.create(null) # For tracking deps of files that were provided without an extension and didn't exist in the referenced directory
 
-	@get = ({filePath, watchContext, canSkipRescan}, settings)->
+	@get = ({filePath, watchContext, canSkipRescan}, settings, task)->
 		settings.cache[filePath]?.process(canSkipRescan) or
-		settings.cache[filePath] = new File(filePath, watchContext, settings)
+		settings.cache[filePath] = new File(filePath, watchContext, settings, task)
 
 
-	constructor: (@filePath, @watchContext, @settings)->
-		super
+	constructor: (@filePath, @watchContext, @settings, @task)->
 		@path = @filePath.replace process.cwd()+'/', ''
+		@pathDebug = chalk.dim @path
 		@dir = Path.dirname(@path)
 		@fileDir = Path.dirname(@filePath)
 		@fileExt = @resolveExtension()
@@ -39,7 +39,7 @@ class File extends require('events')
 		@lastExecuted = null
 		@lastScanned = null
 
-		debug 'simplywatch:file', "New File object for #{chalk.dim @path}"
+		debug.file "new file #{@pathDebug}"
 		return @process()
 
 
@@ -109,13 +109,14 @@ class File extends require('events')
 		Promise.bind(@)
 			.then ()->
 				if File.scans[@hash]
+					debug.imports "using cached scan #{@pathDebug}"
 					@imports = File.scans[@hash].slice()
 					promiseBreak()
 		
 				else if @canScanImports
+					debug.file "scanning #{@pathDebug}"
 					@lastScanned = Date.now()
 					@imports.length = 0
-					debug 'simplywatch:imports', "Scanning #{@path}"
 				
 				else
 					promiseBreak()
@@ -125,7 +126,7 @@ class File extends require('events')
 			
 			.then (imports)->
 				imports.forEach (childPath)=>
-					debug 'simplywatch:imports', "Found #{@dir+'/'+childPath} in #{chalk.dim @path}"
+					debug.imports "found #{chalk.dim Path.join @dir,childPath} in #{@pathDebug}"
 					childPath = Path.resolve(@fileDir, childPath)
 					childFile = File.get({filePath:childPath, @watchContext}, @settings)
 
@@ -134,7 +135,7 @@ class File extends require('events')
 						File.badFilesDeps[childPath].push @
 						delete @settings.cache[childPath]
 
-					@emit('childFile', childFile)
+					@task.emit('childFile', childFile)
 					@imports.push(childFile)
 					childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 
@@ -144,37 +145,10 @@ class File extends require('events')
 				if @imports.length
 					Promise.map @imports, (childFile)-> childFile.scanProcedure
 				else
-					debug 'simplywatch:imports', "0 imports found in #{chalk.dim @path}"
+					debug.imports "0 imports found in #{@pathDebug}"
 
 			.catch promiseBreak.end
 
-
-
-
-	prepareCommandString: (command)->
-		formattedCommand = command.replace regEx.placeholder, (entire, placeholder)=> switch
-			when placeholder is 'path' then @path
-			when @pathParams[placeholder]? then @pathParams[placeholder]
-			else entire
-
-		stringToArgv(formattedCommand)
-
-
-	executeCommand: (command)->
-		@executionTask =
-		Promise.resolve(command).bind(@)
-			.then (command)-> if typeof command is 'function' then command else @prepareCommandString(command)
-			.then (command)->
-				switch typeof command
-					when 'function'
-						command(@filePath, @pathParams)
-
-					when 'array'
-						execa array[0], array.slice(1), env:'FORCE_COLOR':'true'
-
-			.then (result)-> result ||= {stdout:'', stderr:''}
-			.tap ()-> delete @executionTask
-			.tapCatch ()-> delete @executionTask
 
 
 	canExecuteCommand: (invokeTime)->
