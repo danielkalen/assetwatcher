@@ -92,6 +92,6 @@
     "through": "^2.3.8"
   },
   "optionalDependencies": {
-    "fsevents": "^1.0.15"
+    "fsevents": "*"
   }
 }

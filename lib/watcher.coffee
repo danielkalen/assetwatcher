@@ -39,9 +39,8 @@ class Watcher
 	on: (event, callback)->
 		@_watcher.on event, callback
 
-	Object.defineProperties @::,
-		options: get: -> @_watcher.options
-		# on: get: -> @_watcher.on
+	Object.defineProperty @::, 'options',
+		get: -> @_watcher.options
 
 
 	
