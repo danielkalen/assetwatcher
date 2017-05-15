@@ -18,4 +18,5 @@ module.exports = {
 	silent: false
 	haltSerial: false
 	useFsEvents: true
+	retainHistory: false
 }

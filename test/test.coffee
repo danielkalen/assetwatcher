@@ -20,7 +20,7 @@ SimplyWatch = (options, awaitInitialScan)->
 	options.bufferTimeout = 1 unless options.bufferTimeout
 	options.stdout = customStdout
 	options.stderr = customStderr
-	# options.useFsEvents = false
+	options.useFsEvents = !process.env.CI
 	
 	_SimplyWatch(options, awaitInitialScan)
 
@@ -112,6 +112,7 @@ suite "SimplyWatch", ()->
 		fs.fileAsync('test/samples/js/sampleA.js')
 		fs.fileAsync('test/samples/js/sampleB.js')
 	]
+	setup ()-> Promise.delay(300) if process.env.CI
 
 
 

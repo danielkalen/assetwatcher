@@ -1,2 +1,2 @@
 require('coffee-script/register');
-require('./lib/simplywatch');
+module.exports = require('./lib/simplywatch');

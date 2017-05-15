@@ -19,12 +19,15 @@ class Queue
 	constructor: (@settings, @watchTask)->
 		debug.instance 'creating queue'
 		@cycles = @finalCycles = 0
-		@logBuffer = before:[], after:[]
+		@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @settings.globs.join(', ')}"
+		@logBuffer = before:[], after:[], history:[]
 		@logUpdate = require('log-update').create(@settings.stdout)
 		@finalCommandSpinner = require('ora')(stream:@settings.stdout) if @settings.finalCommand
 		@buffer = new ActionBuffer (list)=>
 			@process uniq(list)
 		, @settings.bufferTimeout
+
+		@logRender()
 	
 	
 	add: (file, eventType, depStack=[])->
@@ -111,14 +114,20 @@ class Queue
 						icon = if report.status is 'success' then symbols.success else symbols.error
 						finalOutput.push "#{icon} #{chalk.dim filePath}\n#{@formatOutput fileOutput}"
 
-				@logRender(finalOutput)
-				@logStop(finalOutput.length)
-				failedItems = Object.keys(@running).filter (item)=> @running[item].status is 'failure'
 
-			.then (failedItems)->
+				failedItems = Object.keys(@running).filter (item)=> @running[item].status is 'failure'
+				return [finalOutput, failedItems]
+
+			.spread (finalOutput, failedItems)->
 				debug.tasklist "end #{failedItems.length} failures"
-				@startFinalCommand failedItems.length if @settings.finalCommand
 				@watchTask.emit 'cycle', ++@cycles
+				@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @settings.globs.join(', ')} #{chalk.dim "(x#{@cycles})"}"
+				@logStop()
+				@logRender(finalOutput)
+				@logBuffer.history.push finalOutput... if finalOutput.length
+				
+				@startFinalCommand failedItems.length if @settings.finalCommand
+				
 				@running = false
 
 
@@ -188,7 +197,7 @@ class Queue
 
 
 	formatOutput: (output)->
-		output = output.replace /\n$/, ''
+		output = output.replace /\n+$/, ''
 		return output+'\n'
 
 
@@ -204,21 +213,24 @@ class Queue
 			@logRender()
 		, 50
 
-	logStop: (preserve)->
+	logStop: ()->
 		clearInterval(@logInterval)
 		@logBuffer.before = @logBuffer.after
 		@logBuffer.after = []
-		if preserve
-			@logUpdate.done()
-		else
-			@logUpdate.clear()
+		@logUpdate.clear()
 
 		@logUpdate @logBuffer.before.join('\n') if @logBuffer.before.length
 
 	logRender: (output)->
-		if not output
-			output = []
-			output.push(item) for item in @logBuffer.before
+		if output
+			if @settings.retainHistory
+				output = @logBuffer.history.concat(output, @logHeader)
+			else
+				output.unshift @logHeader
+		else
+			output = if @settings.retainHistory then @logBuffer.history.slice() else []
+			output.push @logHeader
+			output.push @logBuffer.before...
 
 			if @running
 				pendingFrame = spinner.frame()
@@ -232,7 +244,7 @@ class Queue
 
 					output.push "#{icon}#{chalk.dim filePath}#{reason}"
 
-			output.push(item) for item in @logBuffer.after
+			output.push @logBuffer.after...
 		
 		@logUpdate output.join('\n')
 

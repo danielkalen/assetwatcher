@@ -26,6 +26,7 @@ class CommandExecution
 
 			.then (result)-> result ||= defaultResult
 			.then (@result)=> @status = 'success'
+			.tapCatch (err)-> err.stack = err.message if err.message.includes('Command failed:')
 			.catch (@result)=> @status = 'failure'
 			.then ()=> @result
 

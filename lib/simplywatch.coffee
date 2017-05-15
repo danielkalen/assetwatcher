@@ -87,14 +87,11 @@ class WatchTask extends require('events')
 		debug.instance 'start'
 		
 		Promise.map @settings.globs, (dirPath)=>
-			@logger.log "#{chalk.bgYellow.black 'Watching'} #{chalk.dim dirPath}"
 			@watcher.on 'add',		@processFile(dirPath, 'Added')
 			@watcher.on 'change',	@processFile(dirPath, 'Changed')
 			
 			@watcher.add(dirPath)
 			@processGlob(dirPath)
-		# .then ()->
-		# 	console.log 'finished'
 
 
 	stop: ()->

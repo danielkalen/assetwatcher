@@ -128,7 +128,7 @@ class File extends require('events')
 					promiseBreak()
 
 			.then ()->
-				SimplyImport.scanImports(@content or '', {@isCoffee, isStream:true, pathOnly:true, context:@fileDir})
+				SimplyImport.scanImports(@content or '', {context:@fileDir, @isCoffee, isStream:true, pathOnly:true, dirCache:false})
 			
 			.then (imports)->
 				imports.forEach (childPath)=>
