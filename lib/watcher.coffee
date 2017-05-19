@@ -27,8 +27,8 @@ class Watcher
 			"
 
 
-	add: (path)-> unless @watchedFiles.includes(path)
-		debug "add #{chalk.dim path} to watchlist"
+	add: (path, prettyPath)-> unless @watchedFiles.includes(path)
+		debug "add #{chalk.dim prettyPath} to watchlist"
 		@watchedFiles.push(path)
 		@_watcher.add(path)
 

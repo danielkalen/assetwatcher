@@ -209,6 +209,7 @@ class Queue
 			@logRender()
 
 	logStart: ()->
+		@logRender()
 		@logInterval = setInterval ()=>
 			@logRender()
 		, 50

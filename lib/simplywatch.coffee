@@ -57,7 +57,7 @@ class WatchTask extends require('events')
 		if @settings.ignoreGlobs?.length
 			@watcher.options.ignored.push(glob) for glob in @settings.ignoreGlobs
 
-		@.on 'childFile', (childFile)=> @watcher.add childFile.filePath
+		@.on 'childFile', (childFile)=> @watcher.add childFile.filePath, childFile.path
 
 
 
@@ -116,19 +116,19 @@ createWatchTask = (options)->
 				@emit('ready')
 			
 			task.watcher.on 'add', (file)=>
-				debug.watch "ADD #{file}"
+				debug.watch "ADD #{chalk.dim file}"
 				@emit('add', file)
 			
 			task.watcher.on 'change', (file)=>
-				debug.watch "CHANGE #{file}"
+				debug.watch "CHANGE #{chalk.dim file}"
 				@emit('change', file)
 			
 			task.watcher.on 'unlink', (file)=>
-				debug.watch "DELETE #{file}"
+				debug.watch "DELETE #{chalk.dim file}"
 				@emit('delete', file)
 			
 			task.watcher.on 'error', (file)=>
-				debug.watch "ERROR #{file}"
+				debug.watch "ERROR #{chalk.dim file}"
 				@emit('error', file)
 
 		.then ()-> task.watcher.ready
