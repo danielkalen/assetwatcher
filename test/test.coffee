@@ -443,7 +443,7 @@ suite "SimplyWatch", ()->
 							finalCommandDelay: 1
 					).spread (results, watchTask)->
 						expect(stdout).to.include 'final command was executed'
-						expect(stdout).not.to.include 'Error: Command failed:'
+						expect(stdout).not.to.include 'Command failed:'
 
 						watchTask.stop()
 				
@@ -460,7 +460,7 @@ suite "SimplyWatch", ()->
 							finalCommand: 'exit 2'
 							finalCommandDelay: 1
 					).spread (results, watchTask)->
-						expect(stdout).to.include 'Error: Command failed:'
+						expect(stdout).to.include 'Command failed:'
 
 						watchTask.stop()
 

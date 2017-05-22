@@ -112,7 +112,7 @@ class File extends require('events')
 				if File.scans[@hash]
 					debug.imports "using cached scan #{@pathDebug}"
 					@imports = File.scans[@hash].map (filePath)=>
-						childFile = File.get({filePath, @watchContext}, @settings, @task)
+						childFile = File.get({filePath, @watchContext, canSkipRescan:true}, @settings, @task)
 						childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 						@task.emit('childFile', childFile)
 						return childFile
@@ -167,7 +167,7 @@ class File extends require('events')
 	Object.defineProperties @::,
 		canScanImports: get: ()->
 			if @lastScanned
-				return Date.now() - @lastScanned > 150
+				return Date.now() - @lastScanned > 500
 			else
 				return true
 
