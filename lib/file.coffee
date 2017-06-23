@@ -128,11 +128,9 @@ class File extends require('events')
 					promiseBreak()
 
 			.then ()->
-				# SimplyImport.scanImports(@content or '', {context:@fileDir, @isCoffee, isStream:true, pathOnly:true, dirCache:false})
 				SimplyImport.scan file:@filePath, src:@content, context:@fileDir
 			
 			.then (imports)->
-				console.log @filePath, imports
 				imports.forEach (childPath)=>
 					debug.imports "found #{chalk.dim Path.join @dir,childPath} in #{@pathDebug}"
 					childPath = Path.resolve(@fileDir, childPath)
