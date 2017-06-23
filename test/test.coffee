@@ -117,7 +117,7 @@ suite "SimplyWatch", ()->
 
 
 	suite "File handling", ()->
-		test "If a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
+		test.skip "If a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
 			runWatchTask(
 				expected:2
 				glob: 'test/samples/sass/*'
