@@ -1,4 +1,5 @@
 Promise = require 'bluebird'
+Path = require 'path'
 ActionBuffer = require 'actionbuffer'
 cliTruncate = require 'cli-truncate'
 promiseBreak = require 'p-break'
@@ -18,8 +19,9 @@ debug =
 class Queue
 	constructor: (@settings, @watchTask)->
 		debug.instance 'creating queue'
+		watchPaths = @settings.globs.map((glob)-> Path.relative(process.cwd(),glob)).join(', ')
 		@cycles = @finalCycles = 0
-		@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @settings.globs.join(', ')}"
+		@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim watchPaths}"
 		@logBuffer = before:[], after:[], history:[]
 		@logUpdate = require('log-update').create(@settings.stdout)
 		@finalCommandSpinner = require('ora')(stream:@settings.stdout) if @settings.finalCommand
