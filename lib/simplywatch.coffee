@@ -1,6 +1,7 @@
 require('array-includes').shim()
 require('object.values').shim()
 Promise = require 'bluebird'
+Path = require 'path'
 EventfulPromise = require 'eventful-promise'; EventfulPromise.Promise = Promise
 Glob = Promise.promisify require 'glob'
 Console = require('console').Console
@@ -66,6 +67,7 @@ class WatchTask extends require('events')
 
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
+			.filter (filePath)-> not isBinary(filePath)
 			.map (filePath)=>
 				debug.init filePath
 				filePath = absPath(filePath)
@@ -136,9 +138,17 @@ createWatchTask = (options)->
 
 
 
+isBinary = (filePath)->
+	extname = Path.extname(filePath) or Path.basename(filePath)
+	extname = extname.slice(1)
+
+	require('image-extensions').includes(extname) or
+	require('binary-extensions').includes(extname)
+
 
 
 
 
 module.exports = createWatchTask
 module.exports.WatchTask = WatchTask
+module.exports.isBinary = isBinary
