@@ -11,6 +11,7 @@ uniq = require 'uniq'
 chalk = require 'chalk'
 globMatch = require 'micromatch'
 CommandExecution = require './commandExec'
+MATCH_BASE = matchBase:true
 debug =
 	ignored: require('debug')('simplywatch:ignored')
 	tasklist: require('debug')('simplywatch:tasklist')
@@ -182,9 +183,12 @@ class Queue
 
 
 	isIgnored: (path)->
-		for glob in @settings.ignoreGlobs when globMatch.contains(path, glob)
-			debug.ignored path
-			return true
+		for glob in @settings.ignoreGlobs
+			if  globMatch.isMatch(path, glob, MATCH_BASE) or
+				globMatch.isMatch(path, glob) or
+				globMatch.contains(path, glob)
+					debug.ignored path
+					return true
 		
 		return false
 	
