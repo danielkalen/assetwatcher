@@ -22,7 +22,6 @@ options =
 	'haltSerial': args.haltSerial
 
 
-
 if args.help
 	process.stdout.write(yargs.help());
 	process.exit(0)

@@ -7,7 +7,7 @@ module.exports =
 		type: 'array'
 	'i': 
 		alias: 'ignore'
-		describe: 'glob/dir to ignore. Multiple globs can be passed: -g "globA" "globB"'
+		describe: 'glob/dir to ignore. Multiple globs can be passed: -i "globA" "globB"'
 		type: 'array'
 	'x': 
 		alias: 'exec'
