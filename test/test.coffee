@@ -43,7 +43,7 @@ triggerFileChange = (filePath)->
 		# .delay if process.platform is 'darwin' then 0 else 200
 		# .then (contents)-> fs.writeAsync(filePath, contents)
 		
-		.then (contents)->
+		.then (contents='')->
 			retry (tryAgain)->
 				fs.writeAsync(filePath, contents)
 				new Promise (resolve, reject)->

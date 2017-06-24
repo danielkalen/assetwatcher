@@ -68,6 +68,7 @@ class WatchTask extends require('events')
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
 			.filter (filePath)=> not isBinary(filePath) and not @settings.watchBinary
+			.filter (filePath)=> not @queue.isIgnored(filePath)
 			.map (filePath)=>
 				debug.init filePath
 				filePath = absPath(filePath)
