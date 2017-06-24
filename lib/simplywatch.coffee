@@ -67,7 +67,7 @@ class WatchTask extends require('events')
 
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
-			.filter (filePath)-> not isBinary(filePath)
+			.filter (filePath)=> not isBinary(filePath) and not @settings.watchBinary
 			.map (filePath)=>
 				debug.init filePath
 				filePath = absPath(filePath)
@@ -80,6 +80,7 @@ class WatchTask extends require('events')
 
 
 	processFile: (watchContext, eventType)-> (filePath)=>
+		return if isBinary(filePath) and not @settings.watchBinary
 		filePath = absPath(filePath)
 		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
 		@queue.add(file, eventType)

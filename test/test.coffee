@@ -116,8 +116,8 @@ suite "SimplyWatch", ()->
 
 
 
-	suite "File handling", ()->
-		test "If a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
+	suite "file handling", ()->
+		test "if a discovered import has no extension specified, various file extensions will be used to check for a valid file", ()->
 			runWatchTask(
 				expected:2
 				glob: 'test/samples/sass/*'
@@ -131,12 +131,61 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 
 
+		test "binary files will be skipped", ()->
+			runWatchTask(
+				expected:2
+				timeout: 500
+				glob: 'test/samples/binary/*'
+				targetChange: [sample('binary/.DS_Store'), sample('binary/one.zip'), sample('binary/two.mp3')]
+				sort: 'base'
+			).spread (results, watchTask)->
+				expect(results.length).to.equal(0)
+				watchTask.stop()
+
+
+		test "binary files will not be skipped if options.watchBinary", ()->
+			runWatchTask(
+				expected: 2
+				opts: watchBinary: true
+				glob: 'test/samples/binary/*'
+				targetChange: [sample('binary/.DS_Store'), sample('binary/one.zip'), sample('binary/two.mp3')]
+				sort: 'base'
+			).spread (results, watchTask)->
+				expect(results.length).to.equal(2)
+				watchTask.stop()
+
+
+		test "image files will be skipped", ()->
+			runWatchTask(
+				expected:2
+				timeout: 500
+				glob: 'test/samples/img/*'
+				targetChange: [sample('img/one.svg'), sample('img/two.png')]
+				sort: 'base'
+			).spread (results, watchTask)->
+				expect(results.length).to.equal(0)
+				watchTask.stop()
+
+
+		test "image files will not be skipped if options.watchBinary", ()->
+			runWatchTask(
+				expected:2
+				timeout: 500
+				opts: watchBinary: true
+				glob: 'test/samples/img/*'
+				targetChange: [sample('img/one.svg'), sample('img/two.png')]
+				sort: 'base'
+			).spread (results, watchTask)->
+				expect(results.length).to.equal(2)
+				watchTask.stop()
 
 
 
 
-	suite "Watching & Command Execution", ()->
-		test "Will execute a given command on all matched files/dirs in a given glob upon change", ()->
+
+
+	suite "watching & command execution", ()->
+		test "will execute a given command on all matched files/dirs in a given glob upon change", ()->
 			runWatchTask(
 				expected:1
 				glob: 'test/samples/js/*'
@@ -148,7 +197,7 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 		
 
-		test "Will search for imports and if an import changes only its dependents will get updated", ()->
+		test "will search for imports and if an import changes only its dependents will get updated", ()->
 			runWatchTask(
 				expected:2
 				glob: 'test/samples/js/**'
@@ -178,7 +227,7 @@ suite "SimplyWatch", ()->
 				
 		
 
-		test "Error messages from string commands will be outputted to the terminal as well", ()->
+		test "error messages from string commands will be outputted to the terminal as well", ()->
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
 
@@ -197,7 +246,7 @@ suite "SimplyWatch", ()->
 		
 
 
-		test "Error messages from commands will be treated as stdout if the command's exit code was 0", ()->
+		test "error messages from commands will be treated as stdout if the command's exit code was 0", ()->
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
 			
@@ -216,7 +265,7 @@ suite "SimplyWatch", ()->
 		
 
 
-		test "If the command exits with a non-zero status code and there isn't any stdout, the actual error message will be written to the terminal", ()->
+		test "if the command exits with a non-zero status code and there isn't any stdout, the actual error message will be written to the terminal", ()->
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
 			
@@ -239,7 +288,7 @@ suite "SimplyWatch", ()->
 
 
 
-	suite "Placeholders", ()->
+	suite "placeholders", ()->
 		test "function commands can have placeholders in them replaced by the file's values", ()->
 			runWatchTask(
 				expected:1
@@ -259,7 +308,7 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 
 
-		test "Commands can have placeholders in them replaced by the file's values", ()->
+		test "commands can have placeholders in them replaced by the file's values", ()->
 			runWatchTask(
 				expected:'test/temp/four'
 				expectedTarget:'file'
@@ -274,7 +323,7 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 		
 
-		test "Placeholders can be denoted either with dual curly braces or just a hash+single curly braces", ()->
+		test "placeholders can be denoted either with dual curly braces or just a hash+single curly braces", ()->
 			runWatchTask(
 				expected:'test/temp/five'
 				expectedTarget:'file'
@@ -289,7 +338,7 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 		
 
-		test "Invalid placeholders will remain unreplaced", ()->
+		test "invalid placeholders will remain unreplaced", ()->
 			runWatchTask(
 				expected:'test/temp/six'
 				expectedTarget:'file'
@@ -309,8 +358,8 @@ suite "SimplyWatch", ()->
 
 
 
-	suite "Options", ()->
-		test "If options.trim is set to a number, any output messages from commands will be trimmed to only the first X characters", ()->
+	suite "options", ()->
+		test "if options.trim is set to a number, any output messages from commands will be trimmed to only the first X characters", ()->
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
 			
@@ -331,7 +380,7 @@ suite "SimplyWatch", ()->
 		
 
 
-		test "If options.ignoreGlobs is provided, any file that matches the ignore glob (even partially) will not have a command executed for it, but if it is imported by a parent file then the parent will be processed", ()->
+		test "if options.ignoreGlobs is provided, any file that matches the ignore glob (even partially) will not have a command executed for it, but if it is imported by a parent file then the parent will be processed", ()->
 			runWatchTask(
 				expected:3
 				glob: 'test/samples/js/**'
@@ -351,7 +400,7 @@ suite "SimplyWatch", ()->
 		
 
 
-		test "Files inside .git/ will autotomatically be ignored", ()->
+		test "files inside .git/ will autotomatically be ignored", ()->
 			Promise.all([
 				fs.fileAsync('test/temp2/.git/insideGit.js')
 				fs.fileAsync('test/temp2/git/outsideGit.js')
@@ -369,7 +418,7 @@ suite "SimplyWatch", ()->
 
 
 		
-		test "If a function is provided for options.finalCommand, that command will be executed after each batch of file changes has been processed", ()->
+		test "if a function is provided for options.finalCommand, that command will be executed after each batch of file changes has been processed", ()->
 			finalCommandExecuted = false
 
 			runWatchTask(
@@ -387,7 +436,7 @@ suite "SimplyWatch", ()->
 
 
 		
-		test "If a string is provided for options.finalCommand, that command will be executed after each batch of file changes has been processed", ()->
+		test "if a string is provided for options.finalCommand, that command will be executed after each batch of file changes has been processed", ()->
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
 
@@ -407,7 +456,7 @@ suite "SimplyWatch", ()->
 
 
 		
-		test "The final command will only execute once in a given delay (options.finalCommandDelay)", ()->
+		test "the final command will only execute once in a given delay (options.finalCommandDelay)", ()->
 			finalCommandExecuted = 0
 
 			runWatchTask(
@@ -427,7 +476,7 @@ suite "SimplyWatch", ()->
 
 
 		
-		test "If the final command exits with a non-zero status code the error message will be written to the terminal", ()->
+		test "if the final command exits with a non-zero status code the error message will be written to the terminal", ()->
 			Promise.resolve()
 				.then ()->
 					stdout = ''
@@ -466,7 +515,7 @@ suite "SimplyWatch", ()->
 
 
 		
-		test "If a command exits with a non-zero status the final command execution will be canceled", ()->
+		test "if a command exits with a non-zero status the final command execution will be canceled", ()->
 			finalCommandExecuted = 0
 			stdout = ''
 			customStdout.on 'data', (chunk)-> stdout+=chunk
@@ -493,7 +542,7 @@ suite "SimplyWatch", ()->
 
 
 
-	suite "Errors", ()->
+	suite "errors", ()->
 		test "no globs", ()->
 			caught = false
 
