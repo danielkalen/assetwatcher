@@ -19,9 +19,9 @@ debug =
 class Queue
 	constructor: (@settings, @watchTask)->
 		debug.instance 'creating queue'
-		watchPaths = @settings.globs.map((glob)-> Path.relative(process.cwd(),glob)).join(', ')
+		@watchPaths = @settings.globs.map((glob)-> Path.relative(process.cwd(),glob)).join(', ')
 		@cycles = @finalCycles = 0
-		@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim watchPaths}"
+		@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @watchPaths}"
 		@logBuffer = before:[], after:[], history:[]
 		@logUpdate = require('log-update').create(@settings.stdout)
 		@finalCommandSpinner = require('ora')(stream:@settings.stdout) if @settings.finalCommand
@@ -123,7 +123,7 @@ class Queue
 			.spread (finalOutput, failedItems)->
 				debug.tasklist "end #{failedItems.length} failures"
 				@watchTask.emit 'cycle', ++@cycles
-				@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @settings.globs.join(', ')} #{chalk.dim "(x#{@cycles})"}"
+				@logHeader = "#{chalk.bgYellow.black 'Watching'} #{chalk.dim @watchPaths} #{chalk.dim "(x#{@cycles})"}"
 				@logStop()
 				@logRender(finalOutput)
 				@logBuffer.history.push finalOutput... if finalOutput.length
