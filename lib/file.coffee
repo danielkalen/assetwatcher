@@ -4,7 +4,7 @@ Path = require 'path'
 execa = require 'execa'
 chalk = require 'chalk'
 md5 = require 'md5'
-promiseBreak = require 'p-break'
+promiseBreak = require 'promise-break'
 SimplyImport = require 'simplyimport'
 debug =
 	file: require('debug')('simplywatch:file')
