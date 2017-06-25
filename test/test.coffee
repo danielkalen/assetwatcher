@@ -1,4 +1,4 @@
-global.Promise = require 'bluebird'; Promise.config longStackTraces:true if process.env.CI
+global.Promise = require 'bluebird'; Promise.config longStackTraces:true if process.env.DEBUG
 promiseWait = require 'p-wait-for'
 _ = require 'lodash'
 fs = require 'fs-jetpack'

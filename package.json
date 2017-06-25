@@ -40,8 +40,8 @@
     "coverage": "npm run coverage:run && npm run coverage:badge",
     "coverage:run": "mocha $npm_package_mocha_opts --require coffee-coverage/register-istanbul; istanbul report",
     "coverage:badge": "badge-gen -d .config/badges/coverage",
-    "test": "mocha $npm_package_mocha_opts",
-    "test:travis": "CI=true mocha $npm_package_mocha_opts"
+    "test": "SOURCE_MAPS=1 mocha $npm_package_mocha_opts",
+    "test:travis": "CI=true SOURCE_MAPS=1 mocha $npm_package_mocha_opts"
   },
   "dependencies": {
     "@danielkalen/chokidar": "^1.7.0",
