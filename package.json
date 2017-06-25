@@ -69,7 +69,7 @@
     "object.values": "^1.0.4",
     "ora": "^1.2.0",
     "p-break": "^0.1.0",
-    "simplyimport": "^4.0.0-f",
+    "simplyimport": "^4.0.0-h",
     "smart-extend": "^1.5.0",
     "uniq": "^1.0.1",
     "yargs": "^3.29.0"
