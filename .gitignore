@@ -38,3 +38,6 @@ jspm_packages
 
 # Sublime files
 *.sublime-*
+
+# Temp test files
+temp/
