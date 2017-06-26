@@ -22,7 +22,7 @@ class File extends require('events')
 
 
 	constructor: (@filePath, @watchContext, @settings, @task)->
-		@path = @filePath.replace process.cwd()+'/', ''
+		@path = Path.relative process.cwd(), @filePath
 		@pathDebug = chalk.dim @path
 		@dir = Path.dirname(@path)
 		@fileDir = Path.dirname(@filePath)
@@ -50,7 +50,7 @@ class File extends require('events')
 		@scanProcedure =
 		Promise.bind(@)
 			.then(@getContents)
-			.then(@scanForImports)
+			.then(@scanImports)
 
 		return @
 
@@ -106,7 +106,7 @@ class File extends require('events')
 
 
 
-	scanForImports: ()->
+	scanImports: ()->
 		Promise.bind(@)
 			.then ()->
 				if File.scans[@hash]
@@ -128,12 +128,12 @@ class File extends require('events')
 					promiseBreak()
 
 			.then ()->
-				SimplyImport.scan file:@filePath, src:@content
+				SimplyImport.scan file:@filePath, src:@content, flat:false, depth:0
 			
 			.then (imports)->
-				imports.forEach (childPath)=>
-					debug.imports "found #{chalk.dim Path.join @dir,childPath} in #{@pathDebug}"
-					childPath = Path.resolve(@fileDir, childPath)
+				imports.forEach (child)=>
+					debug.imports "found #{chalk.dim Path.relative @dir,child.file} in #{@pathDebug}"
+					childPath = child.file
 					childFile = File.get({filePath:childPath, @watchContext}, @settings, @task)
 
 					if not childFile.fileExt # Indicates provided childPath didn't have a file extension and has yet to be discovered. Delete from cache so that next time a discovery will be re-attempted
