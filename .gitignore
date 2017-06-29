@@ -41,3 +41,6 @@ jspm_packages
 
 # Temp test files
 temp/
+
+# test sample files
+samples/
