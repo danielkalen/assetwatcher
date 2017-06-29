@@ -1,4 +1,6 @@
 module.exports =
+	files: require './createFiles'
+	samples: require './samples'
 	customStdout: require './customStdout'
 	customStderr: require './customStderr'
 	simplywatch: require './simplywatch'

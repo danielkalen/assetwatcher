@@ -22,6 +22,7 @@ suite "SimplyWatch", ()->
 	suiteTeardown ()-> fs.removeAsync('test/temp') unless process.env.KEEP
 	suiteSetup ()-> Promise.all [
 		fs.dirAsync('test/temp', empty:true)
+		helpers.files(helpers.samples)
 	]
 	setup ()-> Promise.delay(300) if process.env.CI
 
