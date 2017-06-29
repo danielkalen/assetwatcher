@@ -20,6 +20,7 @@ options =
 	'trim': parseFloat args.trim
 	'silent': args.silent
 	'haltSerial': args.haltSerial
+	'watchModules': args.watchModules
 
 
 if args.help

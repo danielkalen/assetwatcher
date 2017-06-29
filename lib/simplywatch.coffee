@@ -81,6 +81,7 @@ class WatchTask extends require('events')
 
 	processFile: (watchContext, eventType)-> (filePath)=>
 		filePath = absPath(filePath)
+		return if filePath.includes('node_modules/') and not @settings.watchModules
 		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
 		@queue.add(file, eventType)
 

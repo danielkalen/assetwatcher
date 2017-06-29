@@ -42,6 +42,11 @@ module.exports =
 		describe: 'Execute the command for files that are imported by other files'
 		type: 'boolean'
 		default: false
+	'w': 
+		alias: 'watch-modules'
+		describe: 'watch files inside node_modules/ dir'
+		type: 'boolean'
+		default: false
 	'b': 
 		alias: 'background'
 		describe: 'Run SimplyWatch as a background daemon'
