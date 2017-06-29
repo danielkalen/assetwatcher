@@ -19,5 +19,4 @@ module.exports = {
 	haltSerial: false
 	useFsEvents: true
 	retainHistory: false
-	watchBinary: false
 }
