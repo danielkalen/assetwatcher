@@ -8,7 +8,7 @@ runWatchTask = helpers.runWatchTask
 
 
 sample = ()-> path.join __dirname,'samples',arguments...
-temp = ()-> Path.join __dirname,'temp',arguments...
+temp = ()-> path.join __dirname,'temp',arguments...
 
 
 
@@ -99,6 +99,58 @@ suite "SimplyWatch", ()->
 			).spread (results, watchTask)->
 				expect(results.length).to.equal(2)
 				watchTask.stop()
+
+
+		test "files inside node_modules will not trigger change events", ()->
+			Promise.resolve()
+				.then ()->
+					helpers.files temp(),
+						'node_modules/module-a/index.js': "module.exports = 'module-a'"
+						'node_modules/module-b/index.js': "module.exports = 'module-b'"
+						'local.js': "module.exports = 'local'"
+						'main.js': """
+							import 'module-a'
+							import 'module-b'
+							import './local'
+						"""
+				
+				.then ()->
+					runWatchTask
+						expected: 2
+						timeout: 800
+						glob: 'test/temp/*'
+						targetChange: [temp('local.js'), [200, temp('node_modules/module-a/index.js')], [400, temp('node_modules/module-b/index.js')]]
+						sort: 'base'
+				
+				.spread (results, watchTask)->
+					expect(results.length).to.equal(1)
+					watchTask.stop()
+
+
+		test "files inside node_modules will trigger change events when options.watchModules is set", ()->
+			Promise.resolve()
+				.then ()->
+					helpers.files temp(),
+						'node_modules/module-a/index.js': "module.exports = 'module-a'"
+						'node_modules/module-b/index.js': "module.exports = 'module-b'"
+						'local.js': "module.exports = 'local'"
+						'main.js': """
+							import 'module-a'
+							import 'module-b'
+							import './local'
+						"""
+				
+				.then ()->
+					runWatchTask
+						expected: 3
+						glob: 'test/temp/*'
+						targetChange: [temp('local.js'), [200, temp('node_modules/module-a/index.js')], [400, temp('node_modules/module-b/index.js')]]
+						sort: 'base'
+						opts: watchModules:true
+				
+				.spread (results, watchTask)->
+					expect(results.length).to.equal(3)
+					watchTask.stop()
 
 
 

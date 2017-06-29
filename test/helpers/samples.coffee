@@ -1,5 +1,6 @@
 module.exports = 
 	'bin/.bin': "module.exports = import '../js/sampleB'"
+	'bin/other.bin': "module.exports = import '../js/sampleB'"
 	'binary/.DS_Store': "module.exports = require('../js/sampleA')"
 	'binary/one.zip': "module.exports = require('../js/sampleB')"
 	'binary/two.mp3': "module.exports = require('../js/sampleA')"
