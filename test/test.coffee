@@ -8,7 +8,7 @@ runWatchTask = helpers.runWatchTask
 
 
 sample = ()-> path.join __dirname,'samples',arguments...
-
+temp = ()-> Path.join __dirname,'temp',arguments...
 
 
 
@@ -22,8 +22,6 @@ suite "SimplyWatch", ()->
 	suiteTeardown ()-> fs.removeAsync('test/temp') unless process.env.KEEP
 	suiteSetup ()-> Promise.all [
 		fs.dirAsync('test/temp', empty:true)
-		fs.fileAsync('test/samples/js/sampleA.js')
-		fs.fileAsync('test/samples/js/sampleB.js')
 	]
 	setup ()-> Promise.delay(300) if process.env.CI
 
@@ -44,22 +42,21 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 
 
-		test "binary files will be skipped", ()->
+		test "binary files will not have their imports scanned", ()->
 			runWatchTask(
-				expected:2
+				expected: 2 # not real
 				timeout: 500
 				glob: 'test/samples/binary/*'
-				targetChange: [sample('binary/.DS_Store'), sample('binary/one.zip'), sample('binary/two.mp3')]
+				targetChange: [sample('js/sampleA.js'), sample('js/sampleB.js')]
 				sort: 'base'
 			).spread (results, watchTask)->
 				expect(results.length).to.equal(0)
 				watchTask.stop()
 
 
-		test "binary files will not be skipped if options.watchBinary", ()->
+		test "binary files will trigger change events", ()->
 			runWatchTask(
 				expected: 2
-				opts: watchBinary: true
 				glob: 'test/samples/binary/*'
 				targetChange: [sample('binary/.DS_Store'), sample('binary/one.zip'), sample('binary/two.mp3')]
 				sort: 'base'
@@ -68,25 +65,35 @@ suite "SimplyWatch", ()->
 				watchTask.stop()
 
 
-		test "image files will be skipped", ()->
+		test "binary files will not have their imports scanned", ()->
 			runWatchTask(
-				expected:2
+				expected: 2 # not real
 				timeout: 500
 				glob: 'test/samples/img/*'
-				targetChange: [sample('img/one.svg'), sample('img/two.png')]
+				targetChange: [sample('js/sampleA.js'), sample('js/sampleB.js')]
 				sort: 'base'
 			).spread (results, watchTask)->
 				expect(results.length).to.equal(0)
 				watchTask.stop()
 
 
-		test "image files will not be skipped if options.watchBinary", ()->
+		test "image files will trigger change events", ()->
 			runWatchTask(
-				expected:2
+				expected: 2
 				timeout: 500
-				opts: watchBinary: true
 				glob: 'test/samples/img/*'
 				targetChange: [sample('img/one.svg'), sample('img/two.png')]
+				sort: 'base'
+			).spread (results, watchTask)->
+				expect(results.length).to.equal(2)
+				watchTask.stop()
+
+
+		test ".bin files will have their imports scanned", ()->
+			runWatchTask(
+				expected: 2
+				glob: 'test/samples/bin/.bin'
+				targetChange: [sample('bin/.bin'), sample('js/sampleB.js')]
 				sort: 'base'
 			).spread (results, watchTask)->
 				expect(results.length).to.equal(2)
