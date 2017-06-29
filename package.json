@@ -40,7 +40,7 @@
     "coverage": "npm run coverage:run && npm run coverage:badge",
     "coverage:run": "mocha $npm_package_mocha_opts --require coffee-coverage/register-istanbul; istanbul report",
     "coverage:badge": "badge-gen -d .config/badges/coverage",
-    "test": "SOURCE_MAPS=1 mocha $npm_package_mocha_opts",
+    "test": "SOURCE_MAPS=1 mocha $npm_package_mocha_opts --bail",
     "test:travis": "CI=true SOURCE_MAPS=1 mocha $npm_package_mocha_opts"
   },
   "dependencies": {
@@ -75,7 +75,6 @@
     "yargs": "^3.29.0"
   },
   "devDependencies": {
-    "badge-gen": "^1.0.2",
     "chai": "^3.5.0",
     "chai-spies": "^0.7.1",
     "coffee-coverage": "^2.0.1",
