@@ -67,7 +67,6 @@ class WatchTask extends require('events')
 
 		Promise.delay()
 			.then ()-> Glob(globToScan, {nodir:true, dot:true})
-			.filter (filePath)=> not isBinary(filePath) and not @settings.watchBinary
 			.filter (filePath)=> not @queue.isIgnored(filePath)
 			.map (filePath)=>
 				debug.init filePath
@@ -81,7 +80,6 @@ class WatchTask extends require('events')
 
 
 	processFile: (watchContext, eventType)-> (filePath)=>
-		return if isBinary(filePath) and not @settings.watchBinary
 		filePath = absPath(filePath)
 		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
 		@queue.add(file, eventType)
@@ -140,17 +138,8 @@ createWatchTask = (options)->
 
 
 
-isBinary = (filePath)->
-	extname = Path.extname(filePath) or Path.basename(filePath)
-	extname = extname.slice(1)
-
-	require('image-extensions').includes(extname) or
-	require('binary-extensions').includes(extname)
-
-
 
 
 
 module.exports = createWatchTask
 module.exports.WatchTask = WatchTask
-module.exports.isBinary = isBinary

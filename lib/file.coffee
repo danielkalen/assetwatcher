@@ -5,6 +5,7 @@ execa = require 'execa'
 chalk = require 'chalk'
 md5 = require 'md5'
 promiseBreak = require 'promise-break'
+isBinary = require './helpers/isBinary'
 SimplyImport = require 'simplyimport'
 debug =
 	file: require('debug')('simplywatch:file')
@@ -35,6 +36,7 @@ class File extends require('events')
 		@pathParams = Path.parse @filePath
 		@pathParams.path = @filePath
 		@pathParams.reldir = @relDir.slice(1)
+		@isBinary = isBinary(@filePath)
 		@deps = File.badFilesDeps[@filePathNoExt] or []
 		@imports = []
 		@lastExecuted = null
@@ -45,7 +47,7 @@ class File extends require('events')
 
 
 	process: (canSkipRescan)->
-		return @ if canSkipRescan and @content
+		return @ if @isBinary or canSkipRescan and @content
 		
 		@scanProcedure =
 		Promise.bind(@)
