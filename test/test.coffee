@@ -1,100 +1,13 @@
 global.Promise = require 'bluebird'; Promise.config longStackTraces:true if process.env.DEBUG
-promiseWait = require 'p-wait-for'
-_ = require 'lodash'
 fs = require 'fs-jetpack'
 path = require 'path'
-absPath = require 'abs'
-chai = require 'chai'
-expect = chai.expect
-should = chai.should()
-execa = require 'execa'
-extend = require 'smart-extend'
-retry = require 'promise-retry'
-testWatcher = require('@danielkalen/chokidar').watch([], {ignoreInitial:true})
-customStdout = require('through')(null, null, autoDestroy:false)
-customStderr = require('through')(null, null, autoDestroy:false)
-_SimplyWatch = require('../lib/simplywatch')
+expect = require('chai').expect
+helpers = require './helpers'
+SimplyWatch = helpers.simplywatch
+runWatchTask = helpers.runWatchTask
 
-SimplyWatch = (options, awaitInitialScan)->
-	options.silent = true unless options.silent?
-	options.bufferTimeout = 1 unless options.bufferTimeout
-	options.stdout = customStdout
-	options.stderr = customStderr
-	options.useFsEvents = !process.env.CI
-	
-	_SimplyWatch(options, awaitInitialScan)
 
-randSample = ()-> rand=!rand; if rand=!rand then 'test/samples/js/sampleA.js' else 'test/samples/js/sampleB.js'
 sample = ()-> path.join __dirname,'samples',arguments...
-pathParams = (target)->
-	params = path.parse(target)
-	params.path = path.resolve(target)
-	params.dir = path.resolve(params.dir)
-	return params
-
-
-triggerFileChange = (filePath)->
-	actualChange = new Promise (resolve)-> testWatcher.once 'change', resolve
-	
-	Promise.resolve()
-		.then ()-> testWatcher.add(filePath)
-		.then ()-> fs.readAsync(filePath)
-		.delay(0)
-		# .delay if process.platform is 'darwin' then 0 else 200
-		# .then (contents)-> fs.writeAsync(filePath, contents)
-		
-		.then (contents='')->
-			retry (tryAgain)->
-				fs.writeAsync(filePath, contents)
-				new Promise (resolve, reject)->
-					actualChange.then(resolve)
-					setTimeout (-> reject new Error),300
-				.catch(tryAgain)
-			, {retries:200, minTimeout:100}
-
-		.timeout(3000)
-		.catch Promise.TimeoutError, ()->;
-
-			
-runWatchTask = (options)->
-	watchTask = null
-	results = []
-	options.timeout ?= 4000
-	options.targetChange = options.glob if not options.targetChange
-	options.targetChange = [options.targetChange] if not Array.isArray(options.targetChange)
-	options = extend.deep(
-		{expected:0, expectedTarget:'results', opts: {globs:[options.glob], command:(file, params)-> results.push(params)}}
-		options
-	)
-	
-	Promise.resolve()
-		.then ()-> SimplyWatch options.opts
-		.then ()-> watchTask = arguments[0]
-		.then ()-> Promise.map options.targetChange, (item)->
-			if typeof item is 'string' then triggerFileChange(item) else Promise.delay(item[0]).then ()-> triggerFileChange(item[1])
-		
-		.then ()-> promiseWait ()-> 
-			switch options.expectedTarget
-				when 'results'
-					results.length >= options.expected
-
-				when 'command'
-					watchTask.queue.cycles >= options.expected
-
-				when 'finalCommand'
-					watchTask.queue.finalCycles >= options.expected
-
-				when 'delay'
-					Promise.delay(options.expected).return(true)
-
-				when 'file'
-					fs.existsAsync(options.expected).then (exists)->
-						results = fs.read(options.expected) if exists
-						return !!exists
-		
-		.timeout(options.timeout).catch Promise.TimeoutError, ()->;
-		.then ()-> results = _.sortBy(results, options.sort) if options.sort
-		.then ()-> [results, watchTask]
 
 
 
@@ -189,7 +102,7 @@ suite "SimplyWatch", ()->
 			runWatchTask(
 				expected:1
 				glob: 'test/samples/js/*'
-				targetChange: targetFile=randSample()
+				targetChange: targetFile=helpers.randSample()
 			).spread (results, watchTask)->
 				expect(results.length).to.equal(1)
 				expect(results[0].base).to.equal path.basename(targetFile)
@@ -214,28 +127,32 @@ suite "SimplyWatch", ()->
 		test.skip "Commands will only execute once if changed multiple times within the execDelay option", ()->
 			options = globs:['test/samples/js/*'], command:'echo {{name}} >> test/temp/three', execDelay:5000
 			
-			SimplyWatch(options).then (watcher)-> watcher.ready.then ()->
-				triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three').then ()->
-					triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', 500).then ()->
-						fs.readAsync('test/temp/three', encoding:'utf8').then (result)->
-							expect(result).to.equal "mainCopy\n"
+			Promise.resolve()
+				.then ()-> SimplyWatch(options)
+				.then (watcher)-> watcher.ready
+				.then ()-> helpers.triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three')
+				.then ()-> helpers.triggerFileChange('test/samples/js/mainCopy.js', 'test/temp/three.2', 500)
+				.then ()-> fs.readAsync('test/temp/three')
+				.then (result)->
+					expect(result).to.equal "mainCopy\n"
+				.then ()-> fs.readAsync('test/temp/three.2')
+				.catch (err)-> return err
+				.then ()->
+					expect(err).to.be.an.error
 
-							fs.readAsync('test/temp/three.2', encoding:'utf8').catch (err)->
-								expect(err).to.be.an.error
-
-								watcher.close()
-				
+					watcher.close()
+	
 		
 
 		test "error messages from string commands will be outputted to the terminal as well", ()->
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 
 			runWatchTask(
 				expected:1
 				expectedTarget: 'command'
 				silent: false
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: '>&2 echo "theError" && exit 2'
 			).spread (results, watchTask)->
@@ -248,13 +165,13 @@ suite "SimplyWatch", ()->
 
 		test "error messages from commands will be treated as stdout if the command's exit code was 0", ()->
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 			
 			runWatchTask(
 				expected:1
 				expectedTarget: 'command'
 				silent: false
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: '>&2 echo "stdErr"'
 			).spread (results, watchTask)->
@@ -267,13 +184,13 @@ suite "SimplyWatch", ()->
 
 		test "if the command exits with a non-zero status code and there isn't any stdout, the actual error message will be written to the terminal", ()->
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 			
 			runWatchTask(
 				expected:1
 				expectedTarget: 'command'
 				silent: false
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: 'exit 1'
 			).spread (results, watchTask)->
@@ -292,10 +209,10 @@ suite "SimplyWatch", ()->
 		test "function commands can have placeholders in them replaced by the file's values", ()->
 			runWatchTask(
 				expected:1
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 			).spread (results, watchTask)->
 				expect(results.length).to.equal 1
-				params = pathParams(targetFile)
+				params = helpers.pathParams(targetFile)
 				expect(results[0]).to.eql
 					name: params.name
 					ext: params.ext
@@ -312,12 +229,12 @@ suite "SimplyWatch", ()->
 			runWatchTask(
 				expected:'test/temp/four'
 				expectedTarget:'file'
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: 'echo "{{name}} {{ext}} {{base}} {{reldir}} {{path}} {{dir}}" >> test/temp/four'
 			).spread (results, watchTask)->
 				results = results.split '\n'
-				params = pathParams(targetFile)
+				params = helpers.pathParams(targetFile)
 				expect(results[0]).to.equal "#{params.name} #{params.ext} #{params.base}  #{params.path} #{params.dir}"
 
 				watchTask.stop()
@@ -327,12 +244,12 @@ suite "SimplyWatch", ()->
 			runWatchTask(
 				expected:'test/temp/five'
 				expectedTarget:'file'
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: 'echo "#{name} #{ext} #{base} #{reldir} #{path} #{dir}" >> test/temp/five'
 			).spread (results, watchTask)->
 				results = results.split '\n'
-				params = pathParams(targetFile)
+				params = helpers.pathParams(targetFile)
 				expect(results[0]).to.equal "#{params.name} #{params.ext} #{params.base}  #{params.path} #{params.dir}"
 
 				watchTask.stop()
@@ -342,12 +259,12 @@ suite "SimplyWatch", ()->
 			runWatchTask(
 				expected:'test/temp/six'
 				expectedTarget:'file'
-				glob: targetFile = randSample()
+				glob: targetFile = helpers.randSample()
 				opts:
 					command: 'echo "{{name}} {{badPlaceholder}}" >> test/temp/six'
 			).spread (results, watchTask)->
 				results = results.split '\n'
-				params = pathParams(targetFile)
+				params = helpers.pathParams(targetFile)
 				expect(results[0]).to.equal "#{params.name} {{badPlaceholder}}"
 
 				watchTask.stop()			
@@ -361,7 +278,7 @@ suite "SimplyWatch", ()->
 	suite "options", ()->
 		test "if options.trim is set to a number, any output messages from commands will be trimmed to only the first X characters", ()->
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 			
 			runWatchTask(
 				expected:1
@@ -438,7 +355,7 @@ suite "SimplyWatch", ()->
 		
 		test "if a string is provided for options.finalCommand, that command will be executed after each batch of file changes has been processed", ()->
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 
 			runWatchTask(
 				expected:1
@@ -480,13 +397,13 @@ suite "SimplyWatch", ()->
 			Promise.resolve()
 				.then ()->
 					stdout = ''
-					customStdout.on 'data', (chunk)-> stdout+=chunk
+					helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 
 					runWatchTask(
 						expected:1
 						expectedTarget: 'finalCommand'
 						silent: false
-						glob: randSample()
+						glob: helpers.randSample()
 						opts:
 							finalCommand: 'echo "final command was executed" && exit 2'
 							finalCommandDelay: 1
@@ -498,13 +415,13 @@ suite "SimplyWatch", ()->
 				
 				.then ()->
 					stdout = ''
-					customStdout.on 'data', (chunk)-> stdout+=chunk
+					helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 
 					runWatchTask(
 						expected:1
 						expectedTarget: 'finalCommand'
 						silent: false
-						glob: randSample()
+						glob: helpers.randSample()
 						opts:
 							finalCommand: 'exit 2'
 							finalCommandDelay: 1
@@ -518,7 +435,7 @@ suite "SimplyWatch", ()->
 		test "if a command exits with a non-zero status the final command execution will be canceled", ()->
 			finalCommandExecuted = 0
 			stdout = ''
-			customStdout.on 'data', (chunk)-> stdout+=chunk
+			helpers.customStdout.on 'data', (chunk)-> stdout+=chunk
 
 			runWatchTask(
 				expected:350

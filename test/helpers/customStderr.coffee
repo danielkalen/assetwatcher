@@ -1,0 +1,1 @@
+module.exports = require('through')(null, null, autoDestroy:false)
