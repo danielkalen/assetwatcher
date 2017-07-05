@@ -6,6 +6,7 @@ chalk = require 'chalk'
 md5 = require 'md5'
 promiseBreak = require 'promise-break'
 isBinary = require './helpers/isBinary'
+isModule = require './helpers/isModule'
 SimplyImport = require 'simplyimport'
 debug =
 	file: require('debug')('simplywatch:file')
@@ -134,6 +135,9 @@ class File extends require('events')
 			.then (imports)->
 				imports.forEach (child)=>
 					debug.imports "found #{chalk.dim Path.relative @dir,child.file} in #{@pathDebug}"
+					if isModule(child.file, @settings)
+						return debug.imports "skipping #{chalk.dim Path.relative @dir,child.file} because it's an external module"
+					
 					childPath = child.file
 					childFile = File.get({filePath:childPath, @watchContext}, @settings, @task)
 

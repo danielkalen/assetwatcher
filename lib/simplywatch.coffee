@@ -12,13 +12,14 @@ defaults = require './defaults'
 Watcher = require './watcher'
 File = require './file'
 Queue = require './queue'
+isModule = require './helpers/isModule'
 debug =
 	init: require('debug')('simplywatch:init')
 	watch: require('debug')('simplywatch:watch')
 	instance: require('debug')('simplywatch:instance')
 
 ### istanbul ignore next ###
-do ()->
+do ()-> 
 	try Promise.config cancellation:true
 	process.on 'warning', (e)-> console.warn(e.stack)
 	process.on 'unhandledRejection', (err)-> throw err
@@ -81,7 +82,7 @@ class WatchTask extends require('events')
 
 	processFile: (watchContext, eventType)-> (filePath)=>
 		filePath = absPath(filePath)
-		return if filePath.includes('node_modules/') and not @settings.watchModules
+		return if isModule(filePath, @settings)
 		file = File.get {filePath, watchContext, canSkipRescan: not eventType}, @settings, @
 		@queue.add(file, eventType)
 
