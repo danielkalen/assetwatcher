@@ -14,12 +14,11 @@ debug =
 
 
 class File extends require('events')
-	@scans = Object.create(null)
 	@badFilesDeps = Object.create(null) # For tracking deps of files that were provided without an extension and didn't exist in the referenced directory
 
 	@get = ({filePath, watchContext, canSkipRescan}, settings, task)->
-		settings.cache[filePath]?.process(canSkipRescan) or
-		settings.cache[filePath] = new File(filePath, watchContext, settings, task)
+		settings.fileCache[filePath]?.process(canSkipRescan) or
+		settings.fileCache[filePath] = new File(filePath, watchContext, settings, task)
 
 
 	constructor: (@filePath, @watchContext, @settings, @task)->
@@ -77,7 +76,7 @@ class File extends require('events')
 			if extension
 				@filePath += extension
 				@path += extension
-				@settings.cache[@filePath] = @
+				@settings.fileCache[@filePath] = @
 
 			return extension or ''
 
@@ -111,9 +110,9 @@ class File extends require('events')
 	scanImports: ()->
 		Promise.bind(@)
 			.then ()->
-				if File.scans[@hash]
+				if @settings.scanCache[@hash]
 					debug.imports "using cached scan #{@pathDebug}"
-					@imports = File.scans[@hash].map (filePath)=>
+					@imports = @settings.scanCache[@hash].map (filePath)=>
 						childFile = File.get({filePath, @watchContext, canSkipRescan:true}, @settings, @task)
 						childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 						@task.emit('childFile', childFile)
@@ -141,14 +140,14 @@ class File extends require('events')
 					if not childFile.fileExt # Indicates provided childPath didn't have a file extension and has yet to be discovered. Delete from cache so that next time a discovery will be re-attempted
 						File.badFilesDeps[childPath] ?= []
 						File.badFilesDeps[childPath].push @
-						delete @settings.cache[childPath]
+						delete @settings.fileCache[childPath]
 
 					@task.emit('childFile', childFile)
 					@imports.push(childFile)
 					childFile.deps.push(@) unless childFile.deps.includes(@) or childFile.checkIfImportsFile(@)
 
 			.then ()->
-				File.scans[@hash] = @imports.map (childFile)-> childFile.filePath
+				@settings.scanCache[@hash] = @imports.map (childFile)-> childFile.filePath
 				
 				if @imports.length
 					Promise.map @imports, (childFile)-> childFile.scanProcedure

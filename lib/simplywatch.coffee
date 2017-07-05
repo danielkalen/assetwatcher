@@ -36,7 +36,7 @@ class WatchTask extends require('events')
 			'finalCommandDelay': coerceToNumber
 			'execDelay': coerceToNumber
 			'trim': coerceToNumber
-		)({cache:{}}, defaults, options)
+		)({fileCache:Object.create(null), scanCache:Object.create(null)}, defaults, options)
 
 		switch
 			when not @settings.globs.length or @settings.globs.some((glob)-> typeof glob isnt 'string')
