@@ -94,7 +94,7 @@ class WatchTask extends require('events')
 			@watcher.on 'add',		@processFile(dirPath, 'Added')
 			@watcher.on 'change',	@processFile(dirPath, 'Changed')
 			
-			@watcher.add(dirPath)
+			@watcher.add(dirPath, dirPath)
 			@processGlob(dirPath)
 
 
