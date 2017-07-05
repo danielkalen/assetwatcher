@@ -48,6 +48,7 @@ class Queue
 						depNames = file.deps.map((file)-> file.pathParams.base).join(', ')
 						return " [imported by #{depNames}]"
 
+					# notes += " (waiting for initial scan to complete)" if file.scanProcedure?.isPending()
 					@log chalk.bgGreen.bgGreen.black(eventType)+' '+chalk.dim(file.path+notes)
 
 				if eventType
