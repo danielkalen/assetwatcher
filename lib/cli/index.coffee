@@ -24,10 +24,10 @@ options =
 	'watchModules': args.watchModules
 
 
-if args.help
+if args.help or process.argv.slice(2).length is 0
 	process.stdout.write(yargs.help());
 	process.exit(0)
 else
-	process.title = "simplywatch #{options.globs}"	
+	process.title = "simplywatch #{options.globs}"
 	require('../simplywatch')(options)
 	require('../daemon')(args)
