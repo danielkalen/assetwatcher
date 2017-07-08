@@ -17,6 +17,7 @@ options =
 	'bufferTimeout': args.bufferTimeout
 	'finalCommand': args.finally
 	'finalCommandDelay': args.finallyDelay
+	'concurrency': args.concurrency
 	'trim': parseFloat args.trim
 	'silent': args.silent
 	'haltSerial': args.haltSerial

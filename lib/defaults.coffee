@@ -10,6 +10,7 @@ module.exports = {
 	globs: []
 	ignoreGlobs: []
 	command: null
+	concurrency: Infinity
 	processImports: false
 	finalCommand: null
 	bufferTimeout: 150

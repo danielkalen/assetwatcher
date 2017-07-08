@@ -27,6 +27,11 @@ module.exports =
 		describe: 'The amount of milliseconds to wait before executing the "finally" command'
 		type: 'number'
 		default: 500
+	'c': 
+		alias: 'concurrency'
+		describe: 'The amount of task execution to run in parallel'
+		type: 'number'
+		default: Infinity
 	's': 
 		alias: 'silent'
 		describe: 'Suppress any output from the executing command (including errors)'

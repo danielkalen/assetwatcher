@@ -92,8 +92,9 @@ class Queue
 				@logStart()
 				return list
 	
-			.map (file)->
+			.map((file)->
 				file.commandExecution.start()
+			, concurrency:@settings.concurrency)
 
 			.then ()->
 				finalOutput = []
