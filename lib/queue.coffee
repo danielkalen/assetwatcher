@@ -83,13 +83,13 @@ class Queue
 			.tap ()-> debug.tasklist "start #{list.length} files"
 			.return @settings.command
 			.then (command)->
+				@logStart()
 				@running = new ()->
 					for file in list
 						@[file.path] = file.commandExecution =
 						CommandExecution(command, file.path, file.pathParams)
 					return @
 				
-				@logStart()
 				return list
 	
 			.map((file)->
