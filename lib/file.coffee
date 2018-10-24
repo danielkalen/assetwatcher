@@ -23,6 +23,7 @@ class File extends require('events')
 
 
 	constructor: (@filePath, @watchContext, @settings, @task)->
+		super()
 		@path = Path.relative process.cwd(), @filePath
 		@pathDebug = chalk.dim @path
 		@dir = Path.dirname(@path)

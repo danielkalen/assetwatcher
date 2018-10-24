@@ -1,4 +1,4 @@
-global.Promise = require 'bluebird'; Promise.config longStackTraces:true if process.env.DEBUG
+global.Promise = require 'bluebird'; Promise.config longStackTraces:process.env.PROMISE_DEBUG, warnings:false
 fs = require 'fs-jetpack'
 path = require 'path'
 expect = require('chai').expect

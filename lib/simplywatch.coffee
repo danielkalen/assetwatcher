@@ -30,6 +30,7 @@ coerceToNumber = (value)-> if typeof value is 'number' then not isNaN(value) els
 
 class WatchTask extends require('events')
 	constructor: (options)->
+		super()
 		@settings = extend.allowNull.transform(
 			'globs': coerceToArray
 			'ignoreGlobs': coerceToArray
