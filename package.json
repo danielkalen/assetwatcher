@@ -27,6 +27,11 @@
     "simplywatch": "./bin",
     "simplywatch-debug": "./bin-debug"
   },
+  "files": [
+    "bin",
+    "bin-debug",
+    "lib"
+  ],
   "author": "danielkalen",
   "repository": {
     "type": "git",
