@@ -1,6 +1,6 @@
 {
   "name": "simplywatch",
-  "version": "3.0.0-l5",
+  "version": "3.0.0",
   "description": "Watches files and upon change executes a command for each file INDIVIDUALLY with file-related params",
   "keywords": [
     "asset-watch",
